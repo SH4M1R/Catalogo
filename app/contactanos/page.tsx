@@ -1,0 +1,128 @@
+"use client";
+import Image from "next/image";
+import { Mail, Phone, MapPin, Send } from "lucide-react";
+
+export default function Contacto() {
+  return (
+    <div className="bg-white min-h-screen">
+      <section className="bg-red-600 py-16 px-6 text-center text-white">
+        <h1 className="text-4xl md:text-5xl font-black mb-4 uppercase tracking-tight">Contáctanos</h1>
+        <p className="text-red-100 max-w-2xl mx-auto text-lg font-medium">
+          Estamos en Puente Piedra para atenderte. Envíanos tus consultas.
+        </p>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          
+          {/* FORMULARIO ACTUALIZADO */}
+          <div className="bg-white p-8 rounded-3xl shadow-2xl border border-zinc-100">
+            <h2 className="text-2xl font-bold text-zinc-800 mb-8 flex items-center gap-2">
+              <Send className="text-red-600" size={24} /> Envíanos un mensaje
+            </h2>
+            
+            <form 
+              action="https://formspree.io/f/mzdovoeo" 
+              method="POST" 
+              className="space-y-5"
+            >
+              <div>
+                <label className="block text-sm font-bold text-zinc-700 mb-2">Nombres Completos</label>
+                <input 
+                  name="name" 
+                  type="text" 
+                  required 
+                  placeholder="Ej. Juan Pablo" 
+                  className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none transition-all" 
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-bold text-zinc-700 mb-2">Teléfono</label>
+                  <input 
+                    name="phone" 
+                    type="tel" 
+                    required 
+                    placeholder="964 328 743" 
+                    className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none transition-all" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-zinc-700 mb-2">Gmail</label>
+                  <input 
+                    name="email" 
+                    type="email" 
+                    required 
+                    placeholder="tu-correo@gmail.com" 
+                    className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none transition-all" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-zinc-700 mb-2">Mensaje</label>
+                <textarea 
+                  name="message" 
+                  rows={4} 
+                  required 
+                  placeholder="¿Qué medicamento o producto buscas?" 
+                  className="w-full p-4 bg-zinc-50 border border-zinc-200 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none"
+                ></textarea>
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-red-200 transition-all transform active:scale-95 uppercase tracking-wider"
+              >
+                Enviar Mensaje
+              </button>
+            </form>
+          </div>
+
+          {/* INFO Y FOTO BOTICA */}
+          <div className="flex flex-col">
+            <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100 mb-8">
+              <h2 className="text-2xl font-bold text-zinc-800 mb-8">Información de Local</h2>
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white shadow-sm text-red-600 rounded-xl"><MapPin /></div>
+                  <p className="text-zinc-600 font-medium">Distrito de Puente Piedra, Lima</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white shadow-sm text-red-600 rounded-xl"><Phone /></div>
+                  <p className="text-zinc-600 font-medium">964 328 743 / 985 389 609</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative h-full min-h-[300px] rounded-3xl overflow-hidden shadow-xl">
+              <Image 
+                src="/botica.webp" 
+                alt="Local Mi Ahorro Pharma" 
+                fill 
+                className="object-cover"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* MAPA */}
+        <div className="mt-20">
+          <h2 className="text-2xl font-bold text-center mb-8">Nuestra Ubicación</h2>
+          <div className="rounded-[2.5rem] overflow-hidden shadow-2xl h-[450px] border-8 border-zinc-50">
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d244.04544895890922!2d-77.06307197844333!3d-11.854360266053641!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9105d6d0db52e1b3%3A0x8467c59feedd66d7!2sCalle%20Las%20Acacias%20Mz.A6%20-%20Lt.45%2C%20Carabayllo%2015121!5e0!3m2!1ses-419!2spe!4v1778139388578!5m2!1ses-419!2spe" 
+              width="100%" 
+              height="100%" 
+              style={{ border: 0 }} // Correcto en React
+              allowFullScreen={true} 
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
