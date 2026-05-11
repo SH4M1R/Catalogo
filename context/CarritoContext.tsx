@@ -24,6 +24,35 @@ const CarritoContext = createContext<CarritoContextType | undefined>(undefined);
 
 export function CarritoProvider({ children }: { children: React.ReactNode }) {
   const [carrito, setCarrito] = useState<ItemCarrito[]>([]);
+  const [montado, setMontado] = useState(false);
+
+  useEffect(() => {
+    const datosPersistidos = localStorage.getItem("carrito_app");
+    if (datosPersistidos) {
+      try {
+        const { items, expiracion } = JSON.parse(datosPersistidos);
+        
+        if (Date.now() < expiracion) {
+          setCarrito(items);
+        } else {
+          localStorage.removeItem("carrito_app");
+        }
+      } catch (error) {
+        console.error("Error al parsear el carrito:", error);
+      }
+    }
+    setMontado(true);
+  }, []);
+
+  useEffect(() => {
+    if (montado) {
+      const dataParaGuardar = {
+        items: carrito,
+        expiracion: Date.now() + 10 * 60 * 1000
+      };
+      localStorage.setItem("carrito_app", JSON.stringify(dataParaGuardar));
+    }
+  }, [carrito, montado]);
 
   const agregarAlCarrito = (producto: Producto, cant: number) => {
     setCarrito((prev) => {
@@ -43,15 +72,18 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
 
   const total = carrito.reduce((acc, item) => acc + parseFloat(item.precio) * item.cantidad, 0);
 
+  if (!montado) return null;
+
   return (
     <CarritoContext.Provider value={{ carrito, agregarAlCarrito, eliminarDelCarrito, total }}>
       {children}
     </CarritoContext.Provider>
   );
 }
-
 export const useCarrito = () => {
   const context = useContext(CarritoContext);
-  if (!context) throw new Error("useCarrito debe usarse dentro de CarritoProvider");
+  if (context === undefined) {
+    throw new Error("useCarrito debe usarse dentro de CarritoProvider");
+  }
   return context;
 };

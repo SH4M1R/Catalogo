@@ -17,7 +17,7 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex flex-col items-start justify-center text-white px-8 md:px-20">
           <h2 className="text-4xl md:text-6xl font-black mb-6 drop-shadow-2xl leading-tight">
-            Cuidamos tu Salud <br /> 
+            Nos aseguramos de cuidar tu Salud <br /> 
             <span className="text-red-500">y tu Bolsillo</span>
           </h2>
           <Link 
@@ -38,7 +38,7 @@ export default function Home() {
             Bienvenido a Mi Ahorro Pharma
           </h2>
           <p className="text-lg text-zinc-600 max-w-3xl mx-auto leading-relaxed">
-            Tu farmacia de confianza ahora online. Explora nuestro catálogo y coordina tu entrega por WhatsApp.
+            Tu farmacia de confianza ahora online. Explora nuestro catálogo web y coordina tu entrega por WhatsApp.
           </p>
         </section>
 
@@ -72,7 +72,7 @@ export default function Home() {
               <h3 className="text-3xl font-bold text-red-600 mb-4">Acerca de nosotros</h3>
               <p className="text-zinc-600 text-lg leading-relaxed max-w-4xl mx-auto">
                 Bienvenidos a <span className="font-bold text-red-600">"Mi Ahorro Pharma"</span>. 
-                Nuestro equipo farmacéutico está comprometido a ofrecerte ética y transparencia en cada interacción.
+                Nuestro equipo farmacéutico cuenta con más de 18 años de experiencia y está comprometido a ofrecerte ética y transparencia en cada interacción.
               </p>
             </div>
 
