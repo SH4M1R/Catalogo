@@ -395,7 +395,6 @@ export default function VentaPage() {
                 <p className="flex flex-wrap items-center gap-2 text-sm font-bold text-red-700">
                   Aceptamos todos los métodos de pago
                   <Banknote size={18} />
-                  <CreditCard size={18} />
                 </p>
               </div>
             </div>

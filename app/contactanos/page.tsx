@@ -82,7 +82,7 @@ export default function Contacto() {
 
           {/* INFO Y FOTO BOTICA */}
           <div className="flex flex-col">
-            <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100 mb-8">
+            <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-100 mb-8 shadow-lg">
               <h2 className="text-2xl font-bold text-zinc-800 mb-8">Información de Local</h2>
               <div className="space-y-6">
                 <div className="flex items-center gap-4">

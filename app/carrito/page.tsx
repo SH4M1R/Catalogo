@@ -146,7 +146,7 @@ export default function CarritoPage() {
                       href="/venta"
                       className="w-full bg-red-600 hover:bg-red-700 text-white h-12 rounded-full font-bold flex items-center justify-center transition-all shadow-md shadow-red-100"
                     >
-                      Finalizar pedido
+                      Confirmar Pedido
                     </Link>
                     <div className="flex items-center justify-center gap-4 py-2 border-t border-gray-50 mt-4">
                       <ShieldCheck className="text-zinc-400" size={16} />
@@ -174,7 +174,7 @@ export default function CarritoPage() {
             href="/venta"
             className="bg-red-600 text-white px-8 py-3 rounded-full font-bold text-base active:scale-95 transition-transform flex items-center gap-2 shadow-lg shadow-red-200"
           >
-            Pagar pedido <ChevronRight size={18} />
+            Confirmar Pedido<ChevronRight size={18} />
           </Link>
         </div>
       )}
