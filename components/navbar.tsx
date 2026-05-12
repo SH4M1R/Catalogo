@@ -5,19 +5,30 @@ import Image from "next/image";
 import { ShoppingCart, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useCarrito } from "@/context/CarritoContext";
+import { url } from "inspector/promises";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const { carrito } = useCarrito();
 
-  // TOTAL DE PRODUCTOS
   const totalItems = carrito.reduce(
     (acc, item) => acc + item.cantidad,
     0
   );
 
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  const generarMensaje = () => {
+    return `Hola, necesito ayuda con mi pedido.`;
+  }
+
+  const ayuda = () => {
+    const mensaje = generarMensaje();
+    const telefono = "51964328743";
+    const url = `https://wa.me/${telefono}?text=${mensaje}`;
+    window.open(url, "_blank");
+  };
 
   return (
     <>
@@ -41,7 +52,7 @@ export default function Navbar() {
               href="/"
               className="flex items-center gap-3 group"
             >
-              <div className="relative overflow-hidden rounded-2xl p-1.5 shadow-md group-hover:scale-105 transition-all">
+              <div className="group-hover:scale-105 transition-all">
                 <Image
                   src="/logo.webp"
                   alt="Logo Mi Ahorro Pharma"
@@ -68,23 +79,23 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-2">
             <Link
               href="/"
-              className="text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-white/15 transition-all"
+              className="text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-red-700 transition-all"
             >
-              Inicio
+              INICIO
             </Link>
 
             <Link
               href="/productos"
-              className="text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-white/15 transition-all"
+              className="text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-red-700 transition-all"
             >
-              Catálogo
+              CATÁLOGO
             </Link>
 
             <Link
               href="/contactanos"
-              className="text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-white/15 transition-all"
+              className="text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-red-700 transition-all"
             >
-              Contacto
+              CONTACTO
             </Link>
           </div>
 
@@ -126,7 +137,7 @@ export default function Navbar() {
           onClick={(e) => e.stopPropagation()}
         >
           {/* HEADER */}
-          <div className="bg-gradient-to-r from-red-600 to-red-500 p-6 text-white">
+          <div className="bg-red-600 p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="font-black text-2xl">
@@ -140,7 +151,7 @@ export default function Navbar() {
 
               <button
                 onClick={toggleMenu}
-                className="w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 flex items-center justify-center transition-all"
+                className="w-11 h-11 rounded-2xl bg-red-700 hover:bg-red-700 flex items-center justify-center transition-all"
               >
                 <X size={26} />
               </button>
@@ -154,7 +165,7 @@ export default function Navbar() {
               onClick={toggleMenu}
               className="text-zinc-800 font-bold text-lg p-4 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all"
             >
-              Inicio
+              INICIO
             </Link>
 
             <Link
@@ -162,7 +173,7 @@ export default function Navbar() {
               onClick={toggleMenu}
               className="text-zinc-800 font-bold text-lg p-4 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all"
             >
-              Catálogo
+              CATÁLOGO
             </Link>
 
             <Link
@@ -170,7 +181,7 @@ export default function Navbar() {
               onClick={toggleMenu}
               className="text-zinc-800 font-bold text-lg p-4 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all"
             >
-              Contactanos
+              CONTACTANOS
             </Link>
 
             <Link
@@ -178,7 +189,7 @@ export default function Navbar() {
               onClick={toggleMenu}
               className="flex items-center justify-between text-zinc-800 font-bold text-lg p-4 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all"
             >
-              <span>Carrito</span>
+              <span>CARRITO</span>
 
               {totalItems > 0 && (
                 <span className="bg-red-600 text-white text-xs font-black min-w-6 h-6 px-2 rounded-full flex items-center justify-center">
@@ -190,7 +201,7 @@ export default function Navbar() {
 
           {/* FOOTER SIDEBAR */}
           <div className="absolute bottom-6 left-5 right-5">
-            <div className="bg-red-50 rounded-[2rem] p-5 border border-red-100">
+            <div className="bg-red-50 rounded-xl p-5 border border-red-100">
               <h3 className="text-red-600 font-black text-sm">
                 ¿Necesitas ayuda?
               </h3>
@@ -200,7 +211,10 @@ export default function Navbar() {
                 WhatsApp.
               </p>
 
-              <button className="mt-4 w-full h-11 rounded-xl bg-red-600 hover:bg-zinc-900 text-white font-bold transition-all">
+              <button
+                onClick={ayuda}
+                className="mt-4 w-full h-11 rounded-xl bg-red-600 hover:bg-zinc-900 text-white font-bold transition-all"
+              >
                 Contactar
               </button>
             </div>

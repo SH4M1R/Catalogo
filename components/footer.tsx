@@ -82,7 +82,7 @@ export default function Footer() {
       {/* LÍNEA DE CRÉDITOS */}
       <div className="max-w-7xl mx-auto px-8 mt-16 pt-8 border-t border-zinc-900 text-center">
         <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-          © {currentYear} MI AHORRO PHARMA. <br className="md:hidden" />
+          © {currentYear} MI AHORRO PHARMA - 2026. <br className="md:hidden" />
           Diseñado por Lic. Ingenieria de Software - Juan Pablo Inoñan
         </p>
       </div>
