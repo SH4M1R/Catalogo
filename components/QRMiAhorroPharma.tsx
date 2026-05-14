@@ -6,7 +6,7 @@ export default function QRMiAhorroPharma() {
   return (
     <div className="flex flex-col items-center gap-4 rounded-3xl bg-white p-6 shadow-xl">
       <h2 className="text-2xl font-black text-red-600 text-center">
-        Escanea para ingresar a nuestra Web
+        Escanea para ingresar a nuestra Web 
       </h2>
 
       <div className="relative flex items-center justify-center rounded-2xl bg-white p-4">
