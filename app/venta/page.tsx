@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useCarrito } from "@/context/CarritoContext";
 import {
   Banknote,
-  CreditCard,
   LocateFixed,
   MapPin,
   MessageCircle,
@@ -157,7 +156,7 @@ export default function VentaPage() {
         <div className="relative mx-auto max-w-6xl">
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
             <div>
-              <h1 className="mt-5 max-w-3xl text-3xl font-black tracking-tight text-white sm:text-4xl md:text-6xl">
+              <h1 className="max-w-3xl text-3xl font-black text-white sm:text-4xl md:text-6xl">
                 Finaliza tu consulta de compra
               </h1>
 

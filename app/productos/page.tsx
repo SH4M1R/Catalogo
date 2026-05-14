@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Papa from "papaparse";
 import {
   Search,
@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
+
 import ProductoModal from "@/components/productomodal";
 import { useCarrito } from "@/context/CarritoContext";
 import CardProducto from "@/components/cardproducto";
@@ -23,31 +24,30 @@ interface Producto {
   imagen: string;
 }
 
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxu2PFEjWEu28sy32MYlzQMu7nyyB_x2dVBmgv5mLy5A7cdAq2hqPkxYDyMsu5r5-GVAhZNtB5GtrU/pub?output=csv";
+
 export default function ProductosPage() {
   const { agregarAlCarrito } = useCarrito();
-
+  
+  // Estados principales
   const [productos, setProductos] = useState<Producto[]>([]);
-  const [filtrados, setFiltrados] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [busqueda, setBusqueda] = useState("");
   const [categoriaActiva, setCategoriaActiva] = useState("Todos");
-
+  const [visibleCount, setVisibleCount] = useState(20);
+  
+  // Estados de UI
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
-
-  const [showFilters, setShowFilters] = useState(true); // Desktop
-  const [showMobileFilters, setShowMobileFilters] = useState(false); // Mobile Sidebar
-
+  const [showFilters, setShowFilters] = useState(true);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [notificacion, setNotificacion] = useState<string | null>(null);
 
-  const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxu2PFEjWEu28sy32MYlzQMu7nyyB_x2dVBmgv5mLy5A7cdAq2hqPkxYDyMsu5r5-GVAhZNtB5GtrU/pub?output=csv";
-
+  // Carga de datos
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         const response = await fetch(SHEET_URL);
         const csvText = await response.text();
-
         Papa.parse(csvText, {
           header: true,
           skipEmptyLines: true,
@@ -55,7 +55,6 @@ export default function ProductosPage() {
             const data = results.data as Producto[];
             const validos = data.filter((p) => p.id && p.nombre);
             setProductos(validos);
-            setFiltrados(validos);
             setLoading(false);
           },
         });
@@ -67,30 +66,37 @@ export default function ProductosPage() {
     cargarDatos();
   }, []);
 
+  // Memorizar categorías únicas
+  const categorias = useMemo(() => {
+    return ["Todos", ...Array.from(new Set(productos.map((p) => p.categoria)))];
+  }, [productos]);
+
+  // Lógica de filtrado optimizada (Estado derivado)
+  const filtrados = useMemo(() => {
+    const term = busqueda.toLowerCase();
+    return productos.filter((p) => {
+      const coincideBusqueda = 
+        p.nombre?.toLowerCase().includes(term) || 
+        p.categoria?.toLowerCase().includes(term);
+      const coincideCategoria = 
+        categoriaActiva === "Todos" || p.categoria === categoriaActiva;
+      
+      return coincideBusqueda && coincideCategoria;
+    });
+  }, [productos, busqueda, categoriaActiva]);
+
+  // Resetear paginación al filtrar
   useEffect(() => {
-    let res = productos.filter(
-      (p) =>
-        p.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-        p.categoria?.toLowerCase().includes(busqueda.toLowerCase())
-    );
+    setVisibleCount(20);
+  }, [busqueda, categoriaActiva]);
 
-    if (categoriaActiva !== "Todos") {
-      res = res.filter((p) => p.categoria === categoriaActiva);
-    }
-
-    setFiltrados(res);
-  }, [busqueda, categoriaActiva, productos]);
-
-  const categorias = [
-    "Todos",
-    ...Array.from(new Set(productos.map((p) => p.categoria))),
-  ];
-
-  const handleAgregar = (producto: Producto, cant: number = 1) => {
+  // Handlers
+  const handleAgregar = useCallback((producto: Producto, cant: number = 1) => {
     agregarAlCarrito(producto, cant);
     setNotificacion(`${producto.nombre} añadido`);
-    setTimeout(() => setNotificacion(null), 2500);
-  };
+    const timer = setTimeout(() => setNotificacion(null), 2500);
+    return () => clearTimeout(timer);
+  }, [agregarAlCarrito]);
 
   if (loading) {
     return (
@@ -106,21 +112,15 @@ export default function ProductosPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 overflow-x-hidden font-sans">
-      {/* HEADER ORIGINAL */}
       <section className="relative bg-gradient-to-b from-gray-200 to-gray-100 pb-32 pt-10 px-5 border-b border-gray-200">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center text-center">
-            <h1 className="text-zinc-800 text-3xl md:text-4xl font-black mb-6 tracking-tight">
-              PRODUCTOS DISPONIBLES
+            <h1 className="text-zinc-800 text-3xl md:text-4xl font-black mb-6 tracking-tight uppercase">
+              Productos Disponibles
             </h1>
-            
-            {/* BUSCADOR Y BOTÓN DE FILTRO RESPONSIVE */}
             <div className="flex w-full max-w-3xl gap-3">
               <div className="relative flex-1 group">
-                <Search
-                  className="absolute left-6 top-1/2 -translate-y-1/2 text-red-500 transition-all"
-                  size={22}
-                />
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-red-500" size={22} />
                 <input
                   type="text"
                   placeholder="Buscar medicamentos..."
@@ -129,9 +129,7 @@ export default function ProductosPage() {
                   onChange={(e) => setBusqueda(e.target.value)}
                 />
               </div>
-              
-              {/* BOTÓN DE FILTRO: Solo visible en móvil, no flota */}
-              <button 
+              <button
                 onClick={() => setShowMobileFilters(true)}
                 className="md:hidden flex items-center justify-center w-16 h-16 bg-red-600 text-white rounded-2xl shadow-xl active:scale-95 transition-transform"
               >
@@ -142,16 +140,10 @@ export default function ProductosPage() {
         </div>
       </section>
 
-      {/* CONTENT */}
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 -mt-16 relative z-20">
         <div className="flex gap-8">
-          
-          {/* SIDEBAR DESKTOP (Sin cambios) */}
-          <aside
-            className={`hidden md:block transition-all duration-500 ease-in-out ${
-              showFilters ? "w-72 opacity-100" : "w-0 opacity-0 overflow-hidden"
-            }`}
-          >
+          {/* SIDEBAR DESKTOP */}
+          <aside className={`hidden md:block transition-all duration-500 ease-in-out ${showFilters ? "w-72 opacity-100" : "w-0 opacity-0 overflow-hidden"}`}>
             <div className="sticky top-24 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="font-bold text-sm uppercase tracking-widest text-zinc-400">Categorías</h2>
@@ -175,7 +167,7 @@ export default function ProductosPage() {
             </div>
           </aside>
 
-          {/* MAIN CONTENT */}
+          {/* MAIN */}
           <main className="flex-1">
             <div className="flex items-center justify-between mb-8 px-2">
               <div className="flex items-center gap-4">
@@ -185,22 +177,38 @@ export default function ProductosPage() {
                     className="hidden md:flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 text-zinc-600 hover:border-red-500 hover:text-red-600 transition-all shadow-sm"
                   >
                     <SlidersHorizontal size={18} />
-                    <span className="font-bold text-sm">FILTROS</span>
+                    <span className="font-bold text-sm uppercase">Filtros</span>
                   </button>
                 )}
-                <h2 className="text-xl md:text-2xl font-bold text-zinc-800">
-                  {categoriaActiva}
-                </h2>
+                <h2 className="text-xl md:text-2xl font-bold text-zinc-800">{categoriaActiva}</h2>
               </div>
               <span className="text-zinc-400 text-sm font-medium">{filtrados.length} resultados</span>
             </div>
 
             {filtrados.length > 0 ? (
-              <div className={`grid gap-4 md:gap-6 transition-all duration-500 ${showFilters ? "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-4 xl:grid-cols-5"}`}>
-                {filtrados.map((producto) => (
-                  <CardProducto key={producto.id} producto={producto} onClick={() => setProductoSeleccionado(producto)} onAgregar={() => handleAgregar(producto)} />
-                ))}
-              </div>
+              <>
+                <div className={`grid gap-4 md:gap-6 transition-all duration-500 ${showFilters ? "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-4 xl:grid-cols-5"}`}>
+                  {filtrados.slice(0, visibleCount).map((producto) => (
+                    <CardProducto
+                      key={producto.id}
+                      producto={producto}
+                      onClick={() => setProductoSeleccionado(producto)}
+                      onAgregar={() => handleAgregar(producto)}
+                    />
+                  ))}
+                </div>
+
+                {visibleCount < filtrados.length && (
+                  <div className="flex justify-center mt-10">
+                    <button
+                      onClick={() => setVisibleCount((prev) => prev + 20)}
+                      className="px-7 py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full shadow-lg transition-all active:scale-95"
+                    >
+                      Ver más productos
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="py-20 text-center">
                 <p className="text-zinc-500 text-lg font-medium">No hay resultados</p>
@@ -210,22 +218,18 @@ export default function ProductosPage() {
         </div>
       </div>
 
-      {/* SIDEBAR MODAL (MOBILE FILTERS) */}
+      {/* MOBILE FILTERS */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-[100] md:hidden">
-          {/* Overlay oscuro */}
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)} />
-          
-          {/* Panel Lateral */}
           <div className="absolute left-0 top-0 bottom-0 w-[80%] max-w-sm bg-white shadow-2xl animate-in slide-in-from-left duration-300">
             <div className="p-6 flex flex-col h-full">
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-black text-zinc-800">FILTRAR POR</h2>
+                <h2 className="text-xl font-black text-zinc-800 uppercase">Filtrar por</h2>
                 <button onClick={() => setShowMobileFilters(false)} className="p-2 bg-gray-100 rounded-full">
                   <X size={20} />
                 </button>
               </div>
-              
               <div className="flex-1 overflow-y-auto">
                 <div className="flex flex-col gap-2">
                   {categorias.map((cat) => (
@@ -249,7 +253,7 @@ export default function ProductosPage() {
         </div>
       )}
 
-      {/* TOAST & MODAL (Igual que antes) */}
+      {/* TOAST */}
       {notificacion && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[999]">
           <div className="bg-zinc-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300">
@@ -259,7 +263,11 @@ export default function ProductosPage() {
         </div>
       )}
 
-      <ProductoModal producto={productoSeleccionado} onClose={() => setProductoSeleccionado(null)} onAdd={handleAgregar} />
+      <ProductoModal
+        producto={productoSeleccionado}
+        onClose={() => setProductoSeleccionado(null)}
+        onAdd={handleAgregar}
+      />
     </div>
   );
 }
