@@ -5,6 +5,7 @@ import { useCarrito } from "@/context/CarritoContext";
 import {
   Banknote,
   LocateFixed,
+  Loader2,
   MapPin,
   MessageCircle,
   ShoppingBag,
@@ -16,6 +17,37 @@ const metodosPago = [
   { nombre: "Visa", src: "/pagos/visa.png", fallback: "VI" },
   { nombre: "Efectivo", src: "/pagos/efectivo.png", fallback: "EF" },
 ];
+
+// Limpia símbolos de moneda / comas antes de convertir a número.
+function parsePrecio(precio: string | number | undefined): number {
+  if (typeof precio === "number") return precio;
+  if (!precio) return 0;
+  const limpio = precio.replace(/[^0-9.,]/g, "").replace(",", ".");
+  const valor = parseFloat(limpio);
+  return Number.isFinite(valor) ? valor : 0;
+}
+
+function MetodoPagoBadge({ metodo }: { metodo: (typeof metodosPago)[number] }) {
+  const [fallo, setFallo] = useState(false);
+
+  return (
+    <div
+      title={metodo.nombre}
+      className="flex h-11 w-11 items-center justify-center rounded-xl border border-red-100 bg-white shadow-sm overflow-hidden shrink-0"
+    >
+      {fallo ? (
+        <span className="text-xs font-black text-red-600">{metodo.fallback}</span>
+      ) : (
+        <img
+          src={metodo.src}
+          alt={metodo.nombre}
+          className="max-h-7 max-w-7 object-contain"
+          onError={() => setFallo(true)}
+        />
+      )}
+    </div>
+  );
+}
 
 export default function VentaPage() {
   const { carrito, total } = useCarrito();
@@ -74,9 +106,7 @@ export default function VentaPage() {
       () => {
         setLoadingUbicacion(false);
 
-        setUbicacionError(
-          "No se pudo obtener la ubicación. Escríbela manualmente."
-        );
+        setUbicacionError("No se pudo obtener la ubicación. Escríbela manualmente.");
       },
       {
         enableHighAccuracy: true,
@@ -97,11 +127,12 @@ export default function VentaPage() {
     mensaje += "*PRODUCTOS*\n";
 
     carrito.forEach((item, index) => {
-      const subtotal = parseFloat(item.precio) * item.cantidad;
+      const precioUnitario = parsePrecio(item.precio);
+      const subtotal = precioUnitario * item.cantidad;
 
       mensaje += `*${index + 1}. ${item.nombre}*\n`;
       mensaje += `Cantidad: ${item.cantidad}\n`;
-      mensaje += `Precio: S/ ${parseFloat(item.precio).toFixed(2)}\n`;
+      mensaje += `Precio: S/ ${precioUnitario.toFixed(2)}\n`;
       mensaje += `Subtotal: S/ ${subtotal.toFixed(2)}\n`;
       mensaje += "----------------------\n";
     });
@@ -134,8 +165,7 @@ export default function VentaPage() {
     }
 
     if (!direccion.trim()) {
-      nuevosErrores.direccion =
-        "Ingrese su dirección o use la ubicación automática";
+      nuevosErrores.direccion = "Ingrese su dirección o use la ubicación automática";
       valido = false;
     }
 
@@ -151,7 +181,7 @@ export default function VentaPage() {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f6f6f6] pb-24 text-zinc-900">
+    <div className="min-h-screen overflow-x-hidden bg-[#f6f6f6] pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16 text-zinc-900">
       <section className="relative overflow-hidden bg-red-600 px-4 pb-20 pt-4 md:px-6">
         <div className="relative mx-auto max-w-6xl">
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
@@ -172,9 +202,7 @@ export default function VentaPage() {
         <section className="rounded-[24px] border border-red-100 bg-white p-4 shadow-[0_18px_55px_rgba(31,31,31,0.12)] sm:p-5 md:rounded-[28px] md:p-8">
           <div className="flex flex-col gap-4 border-b border-dashed border-zinc-200 pb-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-2xl font-black md:text-3xl">
-                Datos del cliente
-              </h2>
+              <h2 className="text-2xl font-black md:text-3xl">Datos del cliente</h2>
 
               <p className="mt-1 text-sm font-medium text-zinc-500">
                 Completa la información para preparar el mensaje.
@@ -196,10 +224,7 @@ export default function VentaPage() {
                   setNombre(e.target.value);
 
                   if (errores.nombre) {
-                    setErrores((prev) => ({
-                      ...prev,
-                      nombre: "",
-                    }));
+                    setErrores((prev) => ({ ...prev, nombre: "" }));
                   }
                 }}
                 placeholder="Ingrese su nombre completo"
@@ -212,17 +237,13 @@ export default function VentaPage() {
               />
 
               {errores.nombre && (
-                <p className="mt-2 text-sm font-semibold text-red-500">
-                  {errores.nombre}
-                </p>
+                <p className="mt-2 text-sm font-semibold text-red-500">{errores.nombre}</p>
               )}
             </div>
 
             {/* DNI */}
             <div>
-              <label className="mb-2 block text-sm font-black text-zinc-700">
-                DNI
-              </label>
+              <label className="mb-2 block text-sm font-black text-zinc-700">DNI</label>
 
               <input
                 type="text"
@@ -233,10 +254,7 @@ export default function VentaPage() {
                   setDni(e.target.value.replace(/\D/g, ""));
 
                   if (errores.dni) {
-                    setErrores((prev) => ({
-                      ...prev,
-                      dni: "",
-                    }));
+                    setErrores((prev) => ({ ...prev, dni: "" }));
                   }
                 }}
                 placeholder="Ingrese su DNI"
@@ -249,71 +267,66 @@ export default function VentaPage() {
               />
 
               {errores.dni && (
-                <p className="mt-2 text-sm font-semibold text-red-500">
-                  {errores.dni}
-                </p>
+                <p className="mt-2 text-sm font-semibold text-red-500">{errores.dni}</p>
               )}
             </div>
-          </div>
 
-          {/* DIRECCIÓN */}
-          <div className="mt-5">
-            <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <label className="flex items-center gap-2 text-sm font-black text-zinc-700">
-                <MapPin size={18} className="text-red-600" />
+            {/* DIRECCIÓN — antes faltaba este campo en el formulario */}
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-black text-zinc-700">
                 Dirección de entrega
               </label>
 
-              <button
-                type="button"
-                onClick={obtenerUbicacion}
-                disabled={loadingUbicacion}
-                className="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-zinc-900 px-4 text-sm font-black text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                <LocateFixed size={17} />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <MapPin
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
+                    size={18}
+                  />
+                  <input
+                    type="text"
+                    value={direccion}
+                    onChange={(e) => {
+                      setDireccion(e.target.value);
 
-                {loadingUbicacion
-                  ? "Obteniendo..."
-                  : "Usar mi ubicación"}
-              </button>
+                      if (errores.direccion) {
+                        setErrores((prev) => ({ ...prev, direccion: "" }));
+                      }
+                    }}
+                    placeholder="Escribe tu dirección o usa tu ubicación"
+                    className={`h-14 w-full rounded-2xl border bg-zinc-50 pl-11 pr-5 font-semibold outline-none transition focus:bg-white focus:ring-4
+                    ${
+                      errores.direccion
+                        ? "border-red-500 focus:ring-red-100"
+                        : "border-zinc-200 focus:border-red-500 focus:ring-red-100"
+                    }`}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={obtenerUbicacion}
+                  disabled={loadingUbicacion}
+                  className="flex h-14 shrink-0 items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-5 font-black text-white transition hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-60"
+                >
+                  {loadingUbicacion ? (
+                    <Loader2 size={20} className="animate-spin" />
+                  ) : (
+                    <LocateFixed size={20} />
+                  )}
+                  <span className="whitespace-nowrap">
+                    {loadingUbicacion ? "Ubicando..." : "Usar mi ubicación"}
+                  </span>
+                </button>
+              </div>
+
+              {errores.direccion && (
+                <p className="mt-2 text-sm font-semibold text-red-500">{errores.direccion}</p>
+              )}
+              {!errores.direccion && ubicacionError && (
+                <p className="mt-2 text-sm font-semibold text-amber-600">{ubicacionError}</p>
+              )}
             </div>
-
-            <textarea
-              value={direccion}
-              onChange={(e) => {
-                setDireccion(e.target.value);
-
-                if (errores.direccion) {
-                  setErrores((prev) => ({
-                    ...prev,
-                    direccion: "",
-                  }));
-                }
-              }}
-              placeholder="Escribe tu dirección o presiona “Usar mi ubicación”"
-              rows={4}
-              className={`w-full resize-none rounded-2xl border bg-zinc-50 p-5 font-semibold outline-none transition focus:bg-white focus:ring-4
-              ${
-                errores.direccion
-                  ? "border-red-500 focus:ring-red-100"
-                  : "border-zinc-200 focus:border-red-500 focus:ring-red-100"
-              }`}
-            />
-
-            {errores.direccion ? (
-              <p className="mt-2 text-sm font-semibold text-red-500">
-                {errores.direccion}
-              </p>
-            ) : ubicacionError ? (
-              <p className="mt-2 text-sm font-semibold text-red-600">
-                {ubicacionError}
-              </p>
-            ) : (
-              <p className="mt-2 text-sm font-medium text-zinc-500">
-                Puedes editar la dirección aunque se haya obtenido
-                automáticamente.
-              </p>
-            )}
           </div>
 
           {/* BOTÓN */}
@@ -369,10 +382,7 @@ export default function VentaPage() {
                     </p>
 
                     <p className="mt-1 text-lg font-black text-red-600 sm:text-xl">
-                      S/{" "}
-                      {(
-                        parseFloat(item.precio) * item.cantidad
-                      ).toFixed(2)}
+                      S/ {(parsePrecio(item.precio) * item.cantidad).toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -381,9 +391,7 @@ export default function VentaPage() {
 
             <div className="border-t border-dashed border-zinc-200 p-5">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-lg font-black text-zinc-700">
-                  Total
-                </span>
+                <span className="text-lg font-black text-zinc-700">Total</span>
 
                 <span className="text-3xl font-black text-red-600 sm:text-4xl">
                   S/ {total.toFixed(2)}
@@ -391,10 +399,17 @@ export default function VentaPage() {
               </div>
 
               <div className="mt-4 rounded-2xl bg-red-50 p-3">
-                <p className="flex flex-wrap items-center gap-2 text-sm font-bold text-red-700">
-                  Aceptamos todos los métodos de pago
-                  <Banknote size={18} />
-                </p>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <p className="flex items-center gap-2 text-sm font-bold text-red-700">
+                    <Banknote size={18} />
+                    Aceptamos
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {metodosPago.map((metodo) => (
+                      <MetodoPagoBadge key={metodo.nombre} metodo={metodo} />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

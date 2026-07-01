@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Papa from "papaparse";
 import {
   Search,
@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   SlidersHorizontal,
   X,
+  RotateCcw,
 } from "lucide-react";
 
 import ProductoModal from "@/components/productomodal";
@@ -24,23 +25,213 @@ interface Producto {
   imagen: string;
 }
 
-const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxu2PFEjWEu28sy32MYlzQMu7nyyB_x2dVBmgv5mLy5A7cdAq2hqPkxYDyMsu5r5-GVAhZNtB5GtrU/pub?output=csv";
+const SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxu2PFEjWEu28sy32MYlzQMu7nyyB_x2dVBmgv5mLy5A7cdAq2hqPkxYDyMsu5r5-GVAhZNtB5GtrU/pub?gid=0&single=true&output=csv";
+
+const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 250;
+
+function parsePrecio(precio: string | undefined): number {
+  if (!precio) return 0;
+  const limpio = precio.replace(/[^0-9.,]/g, "").replace(",", ".");
+  const valor = parseFloat(limpio);
+  return Number.isFinite(valor) ? valor : 0;
+}
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
+interface FiltrosPanelProps {
+  categorias: string[];
+  categoriaActiva: string;
+  onCategoria: (cat: string) => void;
+  precioBounds: [number, number];
+  rangoPrecio: [number, number];
+  onRangoPrecio: (rango: [number, number]) => void;
+  onReset: () => void;
+}
+
+function FiltrosPanel({
+  categorias,
+  categoriaActiva,
+  onCategoria,
+  precioBounds,
+  rangoPrecio,
+  onRangoPrecio,
+  onReset,
+}: FiltrosPanelProps) {
+  const [min, max] = precioBounds;
+  const span = Math.max(max - min, 1);
+  const leftPct = ((rangoPrecio[0] - min) / span) * 100;
+  const rightPct = ((rangoPrecio[1] - min) / span) * 100;
+
+  return (
+    <div className="flex flex-col gap-8">
+      {/* CATEGORÍAS */}
+      <div>
+        <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400 mb-4">
+          Categorías
+        </h3>
+        <div className="flex flex-col gap-1">
+          {categorias.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => onCategoria(cat)}
+              className={`text-left px-4 py-3 rounded-xl font-medium text-sm transition-all flex items-center justify-between ${
+                categoriaActiva === cat
+                  ? "bg-red-600 text-white shadow-md shadow-red-200"
+                  : "text-zinc-600 hover:bg-red-50 hover:text-red-600"
+              }`}
+            >
+              {cat}
+              {categoriaActiva === cat && (
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* PRECIO */}
+      <div>
+        <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400 mb-4">
+          Precio
+        </h3>
+
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <div className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2">
+            <span className="block text-[10px] font-bold text-zinc-400 uppercase">
+              Desde
+            </span>
+            <span className="text-sm font-bold text-zinc-800">
+              S/ {rangoPrecio[0].toFixed(2)}
+            </span>
+          </div>
+          <div className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2">
+            <span className="block text-[10px] font-bold text-zinc-400 uppercase">
+              Hasta
+            </span>
+            <span className="text-sm font-bold text-zinc-800">
+              S/ {rangoPrecio[1].toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        <div className="relative h-1.5 rounded-full bg-zinc-200 mt-3 mb-1">
+          <div
+            className="absolute h-1.5 rounded-full bg-red-500"
+            style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }}
+          />
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={0.5}
+            value={rangoPrecio[0]}
+            onChange={(e) => {
+              const nuevo = Math.min(Number(e.target.value), rangoPrecio[1]);
+              onRangoPrecio([nuevo, rangoPrecio[1]]);
+            }}
+            className="rango-slider"
+          />
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={0.5}
+            value={rangoPrecio[1]}
+            onChange={(e) => {
+              const nuevo = Math.max(Number(e.target.value), rangoPrecio[0]);
+              onRangoPrecio([rangoPrecio[0], nuevo]);
+            }}
+            className="rango-slider"
+          />
+        </div>
+      </div>
+
+      <button
+        onClick={onReset}
+        className="flex items-center justify-center gap-2 text-sm font-bold text-zinc-500 hover:text-red-600 transition-colors py-2"
+      >
+        <RotateCcw size={15} />
+        Limpiar filtros
+      </button>
+
+      <style jsx global>{`
+        .rango-slider {
+          position: absolute;
+          top: 50%;
+          left: 0;
+          width: 100%;
+          transform: translateY(-50%);
+          appearance: none;
+          background: transparent;
+          pointer-events: none;
+          margin: 0;
+        }
+        .rango-slider::-webkit-slider-thumb {
+          appearance: none;
+          pointer-events: auto;
+          width: 18px;
+          height: 18px;
+          border-radius: 9999px;
+          background: #dc2626;
+          border: 3px solid white;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+          cursor: pointer;
+        }
+        .rango-slider::-moz-range-thumb {
+          pointer-events: auto;
+          width: 18px;
+          height: 18px;
+          border-radius: 9999px;
+          background: #dc2626;
+          border: 3px solid white;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+          cursor: pointer;
+        }
+        .rango-slider::-webkit-slider-runnable-track {
+          background: transparent;
+        }
+      `}</style>
+    </div>
+  );
+}
+
 
 export default function ProductosPage() {
   const { agregarAlCarrito } = useCarrito();
-  
-  // Estados principales
+
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busqueda, setBusqueda] = useState("");
+
+  const [busquedaInput, setBusquedaInput] = useState("");
+  const busqueda = useDebounce(busquedaInput, SEARCH_DEBOUNCE_MS);
+
   const [categoriaActiva, setCategoriaActiva] = useState("Todos");
-  const [visibleCount, setVisibleCount] = useState(20);
-  
-  // Estados de UI
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
   const [showFilters, setShowFilters] = useState(true);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [notificacion, setNotificacion] = useState<string | null>(null);
+  const notifTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Rango de precios: límites reales derivados del catálogo
+  const precioBounds = useMemo<[number, number]>(() => {
+    if (productos.length === 0) return [0, 100];
+    const precios = productos.map((p) => parsePrecio(p.precio));
+    return [Math.floor(Math.min(...precios)), Math.ceil(Math.max(...precios))];
+  }, [productos]);
+
+  const [rangoPrecio, setRangoPrecio] = useState<[number, number]>([0, 100]);
+  const rangoInicializado = useRef(false);
 
   // Carga de datos
   useEffect(() => {
@@ -66,37 +257,59 @@ export default function ProductosPage() {
     cargarDatos();
   }, []);
 
-  // Memorizar categorías únicas
-  const categorias = useMemo(() => {
-    return ["Todos", ...Array.from(new Set(productos.map((p) => p.categoria)))];
-  }, [productos]);
-
-  // Lógica de filtrado optimizada (Estado derivado)
-  const filtrados = useMemo(() => {
-    const term = busqueda.toLowerCase();
-    return productos.filter((p) => {
-      const coincideBusqueda = 
-        p.nombre?.toLowerCase().includes(term) || 
-        p.categoria?.toLowerCase().includes(term);
-      const coincideCategoria = 
-        categoriaActiva === "Todos" || p.categoria === categoriaActiva;
-      
-      return coincideBusqueda && coincideCategoria;
-    });
-  }, [productos, busqueda, categoriaActiva]);
-
-  // Resetear paginación al filtrar
+  // Inicializa el rango de precio una sola vez, cuando ya conocemos los límites reales
   useEffect(() => {
-    setVisibleCount(20);
-  }, [busqueda, categoriaActiva]);
+    if (!rangoInicializado.current && productos.length > 0) {
+      setRangoPrecio(precioBounds);
+      rangoInicializado.current = true;
+    }
+  }, [productos.length, precioBounds]);
 
-  // Handlers
-  const handleAgregar = useCallback((producto: Producto, cant: number = 1) => {
-    agregarAlCarrito(producto, cant);
-    setNotificacion(`${producto.nombre} añadido`);
-    const timer = setTimeout(() => setNotificacion(null), 2500);
-    return () => clearTimeout(timer);
-  }, [agregarAlCarrito]);
+  const categorias = useMemo(
+    () => ["Todos", ...Array.from(new Set(productos.map((p) => p.categoria)))],
+    [productos]
+  );
+
+  const filtrados = useMemo(() => {
+    const term = busqueda.trim().toLowerCase();
+    return productos.filter((p) => {
+      const coincideBusqueda =
+        !term ||
+        p.nombre?.toLowerCase().includes(term) ||
+        p.categoria?.toLowerCase().includes(term);
+      const coincideCategoria = categoriaActiva === "Todos" || p.categoria === categoriaActiva;
+      const precio = parsePrecio(p.precio);
+      const coincidePrecio = precio >= rangoPrecio[0] && precio <= rangoPrecio[1];
+
+      return coincideBusqueda && coincideCategoria && coincidePrecio;
+    });
+  }, [productos, busqueda, categoriaActiva, rangoPrecio]);
+
+  // Resetear paginación al cambiar cualquier filtro
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [busqueda, categoriaActiva, rangoPrecio]);
+
+  const resetFiltros = useCallback(() => {
+    setCategoriaActiva("Todos");
+    setRangoPrecio(precioBounds);
+  }, [precioBounds]);
+
+  const handleAgregar = useCallback(
+    (producto: Producto, cant: number = 1) => {
+      agregarAlCarrito(producto, cant);
+      setNotificacion(`${producto.nombre} añadido`);
+      if (notifTimer.current) clearTimeout(notifTimer.current);
+      notifTimer.current = setTimeout(() => setNotificacion(null), 2500);
+    },
+    [agregarAlCarrito]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (notifTimer.current) clearTimeout(notifTimer.current);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -111,7 +324,7 @@ export default function ProductosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 overflow-x-hidden font-sans">
+    <div className="min-h-screen bg-gray-100 overflow-x-hidden font-sans pb-24 md:pb-0">
       <section className="relative bg-gradient-to-b from-gray-200 to-gray-100 pb-32 pt-10 px-5 border-b border-gray-200">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center text-center">
@@ -120,13 +333,16 @@ export default function ProductosPage() {
             </h1>
             <div className="flex w-full max-w-3xl gap-3">
               <div className="relative flex-1 group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-red-500" size={22} />
+                <Search
+                  className="absolute left-6 top-1/2 -translate-y-1/2 text-red-500"
+                  size={22}
+                />
                 <input
                   type="text"
                   placeholder="Buscar medicamentos..."
                   className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-xl shadow-gray-200/50 outline-none text-zinc-800 text-base md:text-lg border border-transparent focus:border-red-200 transition-all"
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
+                  value={busquedaInput}
+                  onChange={(e) => setBusquedaInput(e.target.value)}
                 />
               </div>
               <button
@@ -143,27 +359,32 @@ export default function ProductosPage() {
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 -mt-16 relative z-20">
         <div className="flex gap-8">
           {/* SIDEBAR DESKTOP */}
-          <aside className={`hidden md:block transition-all duration-500 ease-in-out ${showFilters ? "w-72 opacity-100" : "w-0 opacity-0 overflow-hidden"}`}>
+          <aside
+            className={`hidden md:block transition-all duration-500 ease-in-out ${
+              showFilters ? "w-72 opacity-100" : "w-0 opacity-0 overflow-hidden"
+            }`}
+          >
             <div className="sticky top-24 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="font-bold text-sm uppercase tracking-widest text-zinc-400">Categorías</h2>
-                <button onClick={() => setShowFilters(false)} className="hover:text-red-600 transition-colors">
+                <h2 className="font-bold text-sm uppercase tracking-widest text-zinc-400">
+                  Filtros
+                </h2>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="hover:text-red-600 transition-colors"
+                >
                   <ChevronLeft size={20} />
                 </button>
               </div>
-              <div className="flex flex-col gap-1">
-                {categorias.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategoriaActiva(cat)}
-                    className={`text-left px-4 py-3 rounded-xl font-medium text-sm transition-all ${
-                      categoriaActiva === cat ? "bg-red-50 text-red-600 shadow-sm" : "text-zinc-600 hover:bg-gray-50 hover:text-zinc-900"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+              <FiltrosPanel
+                categorias={categorias}
+                categoriaActiva={categoriaActiva}
+                onCategoria={setCategoriaActiva}
+                precioBounds={precioBounds}
+                rangoPrecio={rangoPrecio}
+                onRangoPrecio={setRangoPrecio}
+                onReset={resetFiltros}
+              />
             </div>
           </aside>
 
@@ -182,12 +403,20 @@ export default function ProductosPage() {
                 )}
                 <h2 className="text-xl md:text-2xl font-bold text-zinc-800">{categoriaActiva}</h2>
               </div>
-              <span className="text-zinc-400 text-sm font-medium">{filtrados.length} resultados</span>
+              <span className="text-zinc-400 text-sm font-medium">
+                {filtrados.length} resultados
+              </span>
             </div>
 
             {filtrados.length > 0 ? (
               <>
-                <div className={`grid gap-4 md:gap-6 transition-all duration-500 ${showFilters ? "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-4 xl:grid-cols-5"}`}>
+                <div
+                  className={`grid gap-4 md:gap-6 transition-all duration-500 ${
+                    showFilters
+                      ? "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      : "grid-cols-2 md:grid-cols-4 xl:grid-cols-5"
+                  }`}
+                >
                   {filtrados.slice(0, visibleCount).map((producto) => (
                     <CardProducto
                       key={producto.id}
@@ -201,7 +430,7 @@ export default function ProductosPage() {
                 {visibleCount < filtrados.length && (
                   <div className="flex justify-center mt-10">
                     <button
-                      onClick={() => setVisibleCount((prev) => prev + 20)}
+                      onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
                       className="px-7 py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full shadow-lg transition-all active:scale-95"
                     >
                       Ver más productos
@@ -211,7 +440,13 @@ export default function ProductosPage() {
               </>
             ) : (
               <div className="py-20 text-center">
-                <p className="text-zinc-500 text-lg font-medium">No hay resultados</p>
+                <p className="text-zinc-500 text-lg font-medium mb-4">No hay resultados</p>
+                <button
+                  onClick={resetFiltros}
+                  className="text-red-600 font-bold text-sm hover:underline"
+                >
+                  Limpiar filtros
+                </button>
               </div>
             )}
           </main>
@@ -221,33 +456,38 @@ export default function ProductosPage() {
       {/* MOBILE FILTERS */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-[100] md:hidden">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-[80%] max-w-sm bg-white shadow-2xl animate-in slide-in-from-left duration-300">
-            <div className="p-6 flex flex-col h-full">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowMobileFilters(false)}
+          />
+          <div className="absolute left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
+            <div className="p-6 flex flex-col h-full overflow-hidden">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-xl font-black text-zinc-800 uppercase">Filtrar por</h2>
-                <button onClick={() => setShowMobileFilters(false)} className="p-2 bg-gray-100 rounded-full">
+                <button
+                  onClick={() => setShowMobileFilters(false)}
+                  className="p-2 bg-gray-100 rounded-full"
+                >
                   <X size={20} />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto">
-                <div className="flex flex-col gap-2">
-                  {categorias.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => {
-                        setCategoriaActiva(cat);
-                        setShowMobileFilters(false);
-                      }}
-                      className={`text-left px-5 py-4 rounded-2xl font-bold text-base transition-all ${
-                        categoriaActiva === cat ? "bg-red-600 text-white" : "bg-gray-50 text-zinc-600"
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex-1 overflow-y-auto pr-1">
+                <FiltrosPanel
+                  categorias={categorias}
+                  categoriaActiva={categoriaActiva}
+                  onCategoria={(cat) => setCategoriaActiva(cat)}
+                  precioBounds={precioBounds}
+                  rangoPrecio={rangoPrecio}
+                  onRangoPrecio={setRangoPrecio}
+                  onReset={resetFiltros}
+                />
               </div>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 uppercase tracking-wider"
+              >
+                Ver {filtrados.length} resultados
+              </button>
             </div>
           </div>
         </div>
@@ -255,10 +495,12 @@ export default function ProductosPage() {
 
       {/* TOAST */}
       {notificacion && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[999]">
+        <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[999]">
           <div className="bg-zinc-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300">
             <CheckCircle2 className="text-green-400" size={22} />
-            <span className="font-bold text-xs md:text-sm uppercase tracking-wider">{notificacion}</span>
+            <span className="font-bold text-xs md:text-sm uppercase tracking-wider">
+              {notificacion}
+            </span>
           </div>
         </div>
       )}
