@@ -50,7 +50,7 @@ function MetodoPagoBadge({ metodo }: { metodo: (typeof metodosPago)[number] }) {
 }
 
 export default function VentaPage() {
-  const { carrito, total } = useCarrito();
+  const { carrito, total, vaciarCarrito } = useCarrito();
 
   const [nombre, setNombre] = useState("");
   const [dni, setDni] = useState("");
@@ -178,6 +178,7 @@ export default function VentaPage() {
     const url = `https://wa.me/${telefono}?text=${mensaje}`;
 
     window.open(url, "_blank");
+    vaciarCarrito();
   };
 
   return (

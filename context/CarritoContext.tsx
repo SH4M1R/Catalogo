@@ -17,6 +17,7 @@ interface CarritoContextType {
   carrito: ItemCarrito[];
   agregarAlCarrito: (p: Producto, cant: number) => void;
   eliminarDelCarrito: (id: string) => void;
+  vaciarCarrito: () => void;
   total: number;
 }
 
@@ -31,7 +32,7 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
     if (datosPersistidos) {
       try {
         const { items, expiracion } = JSON.parse(datosPersistidos);
-        
+
         if (Date.now() < expiracion) {
           setCarrito(items);
         } else {
@@ -48,7 +49,7 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
     if (montado) {
       const dataParaGuardar = {
         items: carrito,
-        expiracion: Date.now() + 10 * 60 * 1000
+        expiracion: Date.now() + 10 * 60 * 1000,
       };
       localStorage.setItem("carrito_app", JSON.stringify(dataParaGuardar));
     }
@@ -70,16 +71,24 @@ export function CarritoProvider({ children }: { children: React.ReactNode }) {
     setCarrito((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const vaciarCarrito = () => {
+    setCarrito([]);
+    localStorage.removeItem("carrito_app");
+  };
+
   const total = carrito.reduce((acc, item) => acc + parseFloat(item.precio) * item.cantidad, 0);
 
   if (!montado) return null;
 
   return (
-    <CarritoContext.Provider value={{ carrito, agregarAlCarrito, eliminarDelCarrito, total }}>
+    <CarritoContext.Provider
+      value={{ carrito, agregarAlCarrito, eliminarDelCarrito, vaciarCarrito, total }}
+    >
       {children}
     </CarritoContext.Provider>
   );
 }
+
 export const useCarrito = () => {
   const context = useContext(CarritoContext);
   if (context === undefined) {

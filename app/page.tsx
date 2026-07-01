@@ -33,17 +33,47 @@ const slides = [
 
 const team = [
   {
-    name: "Domi Zegarra",
-    desc: "Enfermera y Farmacéutica con más de 18 años de experiencia en el rubro.",
+    name: "Dominga Zegarra",
+    desc: "Enfermera y Técnica en Farmacia con más de 18 años de trayectoria en el sector salud. Especialista en atención al paciente, gestión farmacéutica y asistencia, comprometida en brindar un servicio humano, seguro y de alta calidad para el bienestar de la comunidad.",
     img: "/persona1.webp",
   },
   {
     name: "Juan Pablo Inoñan",
-    desc: "Químico Farmacéutico con más de 20 años de experiencia en el rubro.",
-    img: "/equipo/persona2.webp",
+    desc: "Químico Farmacéutico con más de 20 años de experiencia, actualmente liderando la gestión integral de la botica. Experto en aseguramiento de la calidad y regulación sanitaria, enfocado en garantizar el acceso seguro, ético y confiable a medicamentos.",
+    img: "/persona2.webp",
   },
 ];
 
+const categories = [
+  { title: "Cuidado Personal", img: "/cuidado.webp" },
+  { title: "Medicamentos", img: "/medicamentos.webp" },
+  { title: "Perfumería", img: "/perfumeria.webp" },
+  { title: "Regalos", img: "/regalos.webp" },
+  { title: "Vitaminas", img: "/vitaminas.webp" },
+  { title: "Belleza", img: "/belleza.webp" },
+];
+
+const values = [
+  {
+    icon: <Users size={28} />,
+    title: "Valores",
+    desc: "Nos guiamos por la ética, la empatía y la responsabilidad. Como botica de tu barrio, nos comprometemos con la calidad en cada medicamento, garantizando que el bienestar de tu familia sea siempre nuestra máxima prioridad.",
+  },
+  {
+    icon: <Target size={28} />,
+    title: "Misión",
+    desc: "Cuidar la salud de nuestra comunidad ofreciendo medicamentos seguros, eficaces y accesibles. Marcamos la diferencia a través de la atención personalizada de un equipo profesional y altamente capacitado, listo para brindarte la orientación y confianza que mereces en cada visita.",
+  },
+  {
+    icon: <TrendingUp size={28} />,
+    title: "Visión",
+    desc: "Ser la botica local referente en salud y bienestar, reconocida por innovar constantemente en nuestros servicios farmacéuticos y por la calidez de nuestro personal especializado, convirtiéndonos en el aliado de confianza para una vida más saludable.",
+  },
+];
+
+/**
+ * Hook genérico: detecta cuándo un elemento entra en el viewport.
+ */
 function useInView<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
@@ -65,6 +95,38 @@ function useInView<T extends HTMLElement>() {
   }, []);
 
   return { ref, inView };
+}
+
+/**
+ * Wrapper reutilizable para animaciones de aparición al hacer scroll.
+ * Centraliza la lógica que antes estaba duplicada entre secciones.
+ */
+function Reveal({
+  children,
+  delay = 0,
+  from = "up",
+  className = "",
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  from?: "up" | "left" | "right";
+  className?: string;
+}) {
+  const { ref, inView } = useInView<HTMLDivElement>();
+  const hiddenTransform =
+    from === "left" ? "-translate-x-10" : from === "right" ? "translate-x-10" : "translate-y-6";
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${
+        inView ? "opacity-100 translate-x-0 translate-y-0" : `opacity-0 ${hiddenTransform}`
+      } ${className}`}
+      style={{ transitionDelay: inView ? `${delay}ms` : "0ms" }}
+    >
+      {children}
+    </div>
+  );
 }
 
 function Hero() {
@@ -157,38 +219,34 @@ function Hero() {
 }
 
 function TeamCard({ member, index }: { member: (typeof team)[number]; index: number }) {
-  const { ref, inView } = useInView<HTMLDivElement>();
-  // Condicional para alternar la orientación de la card (índices impares invierten foto/texto)
   const isEven = index % 2 === 0;
 
   return (
-    <div
-      ref={ref}
-      className={`flex flex-col bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300 sm:min-h-[320px] ${
-        isEven ? "sm:flex-row" : "sm:flex-row-reverse"
-      } ${
-        inView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"
-      }`}
-      style={{
-        transitionProperty: "opacity, transform, box-shadow",
-        transitionDuration: "700ms, 700ms, 300ms",
-        transitionTimingFunction: "ease-out",
-        transitionDelay: inView ? `${index * 300}ms, ${index * 300}ms, 0ms` : "0ms",
-      }}
-    >
-      {/* FOTO */}
-      <div className="relative w-full sm:w-80 md:w-[400px] aspect-[4/3] sm:aspect-auto shrink-0 bg-zinc-100">
-        <Image src={member.img} alt={member.name} fill className="object-cover" />
-      </div>
+    <Reveal from={isEven ? "left" : "right"} delay={index * 150}>
+      <div
+        className={`flex flex-col bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300 sm:min-h-[320px] ${
+          isEven ? "sm:flex-row" : "sm:flex-row-reverse"
+        }`}
+      >
+        {/* FOTO: aspect ratio fijo (3/4) en todas las pantallas + object-top para no cortar cabezas */}
+        <div className="relative w-full sm:w-72 md:w-80 aspect-[3/4] shrink-0 bg-zinc-100">
+          <Image
+            src={member.img}
+            alt={member.name}
+            fill
+            className="object-cover object-top"
+          />
+        </div>
 
-      {/* INFO */}
-      <div className={`flex flex-col justify-center p-6 md:p-10 flex-1 ${!isEven ? "text-left" : ""}`}>
-        <h6 className="text-xl md:text-3xl font-bold text-zinc-900 mb-3 md:mb-4 leading-tight">
-          {member.name}
-        </h6>
-        <p className="text-zinc-500 text-sm md:text-lg leading-relaxed">{member.desc}</p>
+        {/* INFO */}
+        <div className="flex flex-col justify-center p-6 md:p-10 flex-1">
+          <h6 className="text-xl md:text-3xl font-bold text-zinc-900 mb-3 md:mb-4 leading-tight">
+            {member.name}
+          </h6>
+          <p className="text-zinc-500 text-sm md:text-lg leading-relaxed">{member.desc}</p>
+        </div>
       </div>
-    </div>
+    </Reveal>
   );
 }
 
@@ -199,43 +257,37 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-6">
         {/* BIENVENIDA */}
-        <section className="pt-14 md:pt-16 pb-10 text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-red-600 mb-4 tracking-tight">
-            Bienvenido a Mi Ahorro Pharma
-          </h2>
-          <p className="text-base md:text-lg text-zinc-600 max-w-3xl mx-auto leading-relaxed">
-            Tu farmacia de confianza ahora online. Explora nuestro catálogo web y coordina tu
-            entrega por WhatsApp.
-          </p>
-        </section>
+        <Reveal>
+          <section className="pt-14 md:pt-16 pb-10 text-center">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-red-600 mb-4 tracking-tight">
+              Bienvenido a Mi Ahorro Pharma
+            </h2>
+            <p className="text-base md:text-lg text-zinc-600 max-w-3xl mx-auto leading-relaxed">
+              Tu farmacia de confianza ahora online. Explora nuestro catálogo web y coordina tu
+              entrega por WhatsApp.
+            </p>
+          </section>
+        </Reveal>
 
         {/* CATEGORÍAS */}
         <section className="py-6 w-full">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6">
-            {[
-              { title: "Cuidado Personal", img: "/cuidado.webp" },
-              { title: "Medicamentos", img: "/medicamentos.webp" },
-              { title: "Perfumería", img: "/perfumeria.webp" },
-              { title: "Regalos", img: "/regalos.webp" },
-              { title: "Vitaminas", img: "/vitaminas.webp" },
-              { title: "Belleza", img: "/belleza.webp" },
-            ].map((cat, index) => (
-              <div
-                key={index}
-                className="group relative overflow-hidden rounded-2xl h-44 sm:h-52 md:h-60 shadow-md border border-zinc-100"
-              >
-                <Image
-                  src={cat.img}
-                  alt={cat.title}
-                  fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex items-end p-4 md:p-6">
-                  <span className="text-white font-bold text-base md:text-xl tracking-wide">
-                    {cat.title}
-                  </span>
+            {categories.map((cat, index) => (
+              <Reveal key={cat.title} delay={index * 100}>
+                <div className="group relative overflow-hidden rounded-2xl aspect-square shadow-md border border-zinc-100">
+                  <Image
+                    src={cat.img}
+                    alt={cat.title}
+                    fill
+                    className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex items-end p-4 md:p-6">
+                    <span className="text-white font-bold text-base md:text-xl tracking-wide">
+                      {cat.title}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </section>
@@ -243,46 +295,31 @@ export default function Home() {
         {/* ACERCA DE NOSOTROS */}
         <section className="pt-16 pb-24">
           <div className="bg-zinc-50 rounded-[2rem] md:rounded-[3rem] p-6 sm:p-10 md:p-16 border border-zinc-100">
-            <div className="text-center mb-12">
-              <h3 className="text-2xl md:text-3xl font-bold text-red-600 mb-4">
-                Acerca de nosotros
-              </h3>
-              <p className="text-zinc-600 text-base md:text-lg leading-relaxed max-w-4xl mx-auto">
-                Bienvenidos a <span className="font-bold text-red-600">"Mi Ahorro Pharma"</span>.
-                Nuestro equipo farmacéutico cuenta con más de 18 años de experiencia y está
-                comprometido a ofrecerte ética y transparencia en cada interacción.
-              </p>
-            </div>
+            <Reveal>
+              <div className="text-center mb-12">
+                <h3 className="text-2xl md:text-3xl font-bold text-red-600 mb-4">
+                  Acerca de nosotros
+                </h3>
+                <p className="text-zinc-600 text-base md:text-lg leading-relaxed max-w-4xl mx-auto">
+                  Bienvenidos a <span className="font-bold text-red-600">"Mi Ahorro Pharma"</span>.
+                  Nuestro equipo farmacéutico cuenta con más de 18 años de experiencia y está
+                  comprometido a ofrecerte ética y transparencia en cada interacción.
+                </p>
+              </div>
+            </Reveal>
 
             {/* VALORES, MISIÓN, VISIÓN */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-              {[
-                {
-                  icon: <Users size={28} />,
-                  title: "Valores",
-                  desc: "Nos guiamos por la ética, la empatía y la responsabilidad. Como botica de tu barrio, nos comprometemos con la calidad en cada medicamento, garantizando que el bienestar de tu familia sea siempre nuestra máxima prioridad.",
-                },
-                {
-                  icon: <Target size={28} />,
-                  title: "Misión",
-                  desc: "Cuidar la salud de nuestra comunidad ofreciendo medicamentos seguros, eficaces y accesibles. Marcamos la diferencia a través de la atención personalizada de un equipo profesional y altamente capacitado, listo para brindarte la orientación y confianza que mereces en cada visita.",
-                },
-                {
-                  icon: <TrendingUp size={28} />,
-                  title: "Visión",
-                  desc: "Ser la botica local referente en salud y bienestar, reconocida por innovar constantemente en nuestros servicios farmacéuticos y por la calidez de nuestro personal especializado, convirtiéndonos en el aliado de confianza para una vida más saludable.",
-                },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm border border-zinc-100"
-                >
-                  <div className="w-14 h-14 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-4">
-                    {item.icon}
+              {values.map((item, i) => (
+                <Reveal key={item.title} delay={i * 150}>
+                  <div className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm border border-zinc-100 h-full">
+                    <div className="w-14 h-14 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-4">
+                      {item.icon}
+                    </div>
+                    <h6 className="text-lg font-bold mb-2 text-zinc-900">{item.title}</h6>
+                    <p className="text-zinc-500 text-sm leading-snug">{item.desc}</p>
                   </div>
-                  <h6 className="text-lg font-bold mb-2 text-zinc-900">{item.title}</h6>
-                  <p className="text-zinc-500 text-sm leading-snug">{item.desc}</p>
-                </div>
+                </Reveal>
               ))}
             </div>
 
@@ -292,12 +329,11 @@ export default function Home() {
                 Nuestro equipo
               </h3>
               <p className="text-zinc-500 text-sm md:text-base text-center mb-10">
-                Las personas detrás de cada recomendación.
+                Las personas detrás de cada atención y recomendación.
               </p>
-              {/* Se cambió de 'max-w-2xl' a 'max-w-4xl' para expandir el ancho de la lista */}
               <div className="flex flex-col gap-8 max-w-4xl mx-auto">
                 {team.map((member, i) => (
-                  <TeamCard key={i} member={member} index={i} />
+                  <TeamCard key={member.name} member={member} index={i} />
                 ))}
               </div>
             </div>

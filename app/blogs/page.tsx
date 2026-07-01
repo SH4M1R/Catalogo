@@ -9,79 +9,27 @@ interface Blog {
   titulo: string;
   descripcion: string;
   tiktok: string;
+  imagen: string;
 }
 
 const SHEET_URL_BLOGS =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxu2PFEjWEu28sy32MYlzQMu7nyyB_x2dVBmgv5mLy5A7cdAq2hqPkxYDyMsu5r5-GVAhZNtB5GtrU/pub?gid=1105937198&single=true&output=csv";
 
-interface TikTokData {
-  thumbnail: string | null;
-  videoId: string | null;
+function extraerTikTokId(url: string | undefined): string | null {
+  if (!url) return null;
+  const match = url.match(/\/video\/(\d+)/);
+  return match ? match[1] : null;
 }
 
-function useTikTokOEmbed(url: string | undefined) {
-  const [data, setData] = useState<TikTokData | "loading" | "error">("loading");
-
-  useEffect(() => {
-    let cancelado = false;
-    setData("loading");
-
-    if (!url) {
-      setData("error");
-      return;
-    }
-
-    fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("oEmbed falló");
-        return res.json();
-      })
-      .then((json) => {
-        if (cancelado) return;
-        setData({
-          thumbnail: json.thumbnail_url ?? null,
-          videoId: json.embed_product_id ?? null,
-        });
-      })
-      .catch(() => {
-        if (!cancelado) setData("error");
-      });
-
-    return () => {
-      cancelado = true;
-    };
-  }, [url]);
-
-  return data;
-}
-
-function TikTokEmbed({ url, titulo }: { url: string; titulo: string }) {
-  const data = useTikTokOEmbed(url);
+function TikTokPreview({ blog }: { blog: Blog }) {
+  const videoId = useMemo(() => extraerTikTokId(blog.tiktok), [blog.tiktok]);
   const [reproduciendo, setReproduciendo] = useState(false);
 
-  if (data === "loading") {
-    return <div className="h-full w-full bg-zinc-900 animate-pulse" />;
-  }
-
-  if (data === "error" || (!data.thumbnail && !data.videoId)) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex h-full w-full flex-col items-center justify-center gap-2 bg-zinc-900 text-zinc-400 hover:text-white transition-colors"
-      >
-        <ExternalLink size={30} />
-        <span className="text-xs font-bold uppercase tracking-wide">Ver en TikTok</span>
-      </a>
-    );
-  }
-
-  if (reproduciendo && data.videoId) {
+  if (reproduciendo && videoId) {
     return (
       <iframe
-        src={`https://www.tiktok.com/embed/v2/${data.videoId}`}
-        title={titulo}
+        src={`https://www.tiktok.com/embed/v2/${videoId}`}
+        title={blog.titulo}
         className="h-full w-full"
         style={{ border: 0 }}
         allow="encrypted-media;"
@@ -92,22 +40,24 @@ function TikTokEmbed({ url, titulo }: { url: string; titulo: string }) {
 
   return (
     <button
-      onClick={() => (data.videoId ? setReproduciendo(true) : window.open(url, "_blank"))}
+      onClick={() =>
+        videoId ? setReproduciendo(true) : window.open(blog.tiktok, "_blank")
+      }
       className="group relative h-full w-full block"
-      aria-label={`Reproducir video: ${titulo}`}
+      aria-label={videoId ? `Reproducir video: ${blog.titulo}` : `Ver en TikTok: ${blog.titulo}`}
     >
-      {data.thumbnail ? (
-        <img
-          src={data.thumbnail}
-          alt={titulo}
-          className="h-full w-full object-cover"
-        />
+      {blog.imagen ? (
+        <img src={blog.imagen} alt={blog.titulo} className="h-full w-full object-cover" />
       ) : (
         <div className="h-full w-full bg-zinc-900" />
       )}
       <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors flex items-center justify-center">
         <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/90 group-hover:scale-110 flex items-center justify-center shadow-xl transition-transform">
-          <Play className="text-red-600 ml-1" size={26} fill="currentColor" />
+          {videoId ? (
+            <Play className="text-red-600 ml-1" size={26} fill="currentColor" />
+          ) : (
+            <ExternalLink className="text-red-600" size={24} />
+          )}
         </div>
       </div>
     </button>
@@ -116,10 +66,10 @@ function TikTokEmbed({ url, titulo }: { url: string; titulo: string }) {
 
 function BlogCard({ blog }: { blog: Blog }) {
   return (
-    <article className="flex flex-col sm:flex-row bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300 sm:min-h-[440px]">
-      {/* VIDEO — ocupa el lugar de la imagen */}
+    <article className="flex flex-col sm:flex-row bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300 sm:min-h-[350px]">
+      {/* MINIATURA / VIDEO */}
       <div className="relative w-full sm:w-80 md:w-96 aspect-[9/16] sm:aspect-auto shrink-0 bg-zinc-950">
-        <TikTokEmbed url={blog.tiktok} titulo={blog.titulo} />
+        <TikTokPreview blog={blog} />
       </div>
 
       {/* CONTENIDO */}
@@ -127,9 +77,7 @@ function BlogCard({ blog }: { blog: Blog }) {
         <h2 className="text-xl md:text-3xl font-bold text-zinc-800 mb-3 md:mb-4 leading-tight">
           {blog.titulo}
         </h2>
-        <p className="text-zinc-500 text-sm md:text-lg leading-relaxed">
-          {blog.descripcion}
-        </p>
+        <p className="text-zinc-500 text-sm md:text-lg leading-relaxed">{blog.descripcion}</p>
       </div>
     </article>
   );
@@ -162,8 +110,6 @@ export default function BlogsPage() {
     cargarBlogs();
   }, []);
 
-  const blogsOrdenados = useMemo(() => blogs, [blogs]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
@@ -189,17 +135,15 @@ export default function BlogsPage() {
       </section>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 md:py-14">
-        {blogsOrdenados.length > 0 ? (
+        {blogs.length > 0 ? (
           <div className="flex flex-col gap-6 md:gap-8">
-            {blogsOrdenados.map((blog) => (
+            {blogs.map((blog) => (
               <BlogCard key={blog.id} blog={blog} />
             ))}
           </div>
         ) : (
           <div className="py-20 text-center">
-            <p className="text-zinc-500 text-lg font-medium">
-              Todavía no hay blogs publicados.
-            </p>
+            <p className="text-zinc-500 text-lg font-medium">Todavía no hay blogs publicados.</p>
           </div>
         )}
       </div>

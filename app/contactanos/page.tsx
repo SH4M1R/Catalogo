@@ -11,8 +11,7 @@ export default function Contacto() {
           Contáctanos
         </h1>
         <p className="text-zinc-600 max-w-2xl mx-auto text-base md:text-lg font-medium leading-relaxed">
-          Somos una botica con más de 5 años de atención ubicada en Santa Paula - Puente
-          Piedra para atenderte. Envíanos tus consultas o cotizaciones.
+          Somos una botica con más de 5 años de atención ubicada en Santa Paula - Puente Piedra para atenderte. Envíanos tus consultas o recomendaciones para nuestra página web.
         </p>
       </section>
 
