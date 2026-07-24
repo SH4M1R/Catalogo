@@ -29,23 +29,23 @@ export default function Footer() {
     <footer className="bg-zinc-950 text-zinc-400 border-t border-zinc-800 pt-16 md:pt-20 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-10 mt-auto">
       <div className="max-w-7xl mx-auto px-6 md:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
-          {/* COLUMNA 1: MARCA Y UBICACIÓN */}
+          {/* MARCA Y UBICACIÓN */}
           <div className="flex flex-col gap-5 sm:col-span-2 lg:col-span-1">
-            <h2 className="text-white text-xl font-black tracking-tight">
-              MI AHORRO <span className="text-red-500">PHARMA</span>
+            <h2 className="text-white text-xl font-bold tracking-tight">
+              MI AHORRO <span className="text-primary">PHARMA</span>
             </h2>
-            <p className="text-sm leading-relaxed max-w-sm">
+            <p className="text-sm leading-relaxed max-w-sm text-zinc-400">
               Tu farmacia de confianza en el distrito de Puente Piedra. Comprometidos con
               ofrecerte medicamentos seguros y productos de cuidado personal con la mejor
               atención profesional.
             </p>
             <div className="flex items-center gap-2 text-sm text-zinc-300">
-              <MapPin size={18} className="text-red-500 shrink-0" />
+              <MapPin size={17} className="text-primary shrink-0" />
               <span>Puente Piedra, Lima, Perú</span>
             </div>
           </div>
 
-          {/* COLUMNA 2: NAVEGACIÓN RÁPIDA */}
+          {/* NAVEGACIÓN */}
           <div>
             <h3 className="text-white font-bold mb-6 uppercase tracking-widest text-xs">
               Explorar
@@ -55,7 +55,7 @@ export default function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="group inline-flex items-center gap-1.5 hover:text-red-500 transition-colors"
+                    className="group inline-flex items-center gap-1.5 hover:text-primary transition-colors"
                   >
                     {link.label}
                     <ArrowUpRight
@@ -68,7 +68,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* COLUMNA 3: CONTACTO */}
+          {/* CONTACTO */}
           <div>
             <h3 className="text-white font-bold mb-6 uppercase tracking-widest text-xs">
               Atención al cliente
@@ -81,7 +81,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 group"
               >
-                <div className="p-2 bg-zinc-900 rounded-lg group-hover:bg-red-600 transition-colors shrink-0">
+                <div className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl group-hover:bg-primary group-hover:border-primary transition-colors shrink-0">
                   <MessageCircle size={16} className="text-white" />
                 </div>
                 <div className="flex flex-col">
@@ -91,7 +91,7 @@ export default function Footer() {
               </a>
 
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-zinc-900 rounded-lg shrink-0">
+                <div className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl shrink-0">
                   <Phone size={16} className="text-zinc-400" />
                 </div>
                 <div className="flex flex-col text-sm text-zinc-300">
@@ -102,7 +102,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* COLUMNA 4: REDES SOCIALES */}
+          {/* REDES SOCIALES */}
           <div>
             <h3 className="text-white font-bold mb-6 uppercase tracking-widest text-xs">
               Síguenos
@@ -116,7 +116,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 group"
                 >
-                  <div className="p-2 bg-zinc-900 rounded-lg group-hover:bg-red-600 transition-colors shrink-0">
+                  <div className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl group-hover:bg-primary group-hover:border-primary transition-colors shrink-0">
                     <img src={red.icon} alt={red.nombre} className="w-4 h-4" />
                   </div>
                   <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">
@@ -128,13 +128,13 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* LÍNEA DE CRÉDITOS */}
+        {/* CRÉDITOS */}
         <div className="mt-14 md:mt-16 pt-8 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 text-center sm:text-left">
           <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-            © {currentYear} Mi Ahorro Pharma - 2026
+            © {currentYear} - Botica Mi Ahorro Pharma
           </p>
           <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">
-            Diseñado por Ingeniería de Software · Juan Pablo Inoñan
+            Diseñado por Ingeniero de Software · Juan Pablo Inoñan
           </p>
         </div>
       </div>

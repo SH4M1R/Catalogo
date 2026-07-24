@@ -51,11 +51,11 @@ function TikTokPreview({ blog }: { blog: Blog }) {
         <div className="h-full w-full bg-zinc-900" />
       )}
       <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/90 group-hover:scale-110 flex items-center justify-center shadow-xl transition-transform">
+        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/95 group-hover:scale-110 flex items-center justify-center shadow-xl transition-transform">
           {videoId ? (
-            <Play className="text-red-600 ml-1" size={26} fill="currentColor" />
+            <Play className="text-primary ml-0.5" size={22} fill="currentColor" />
           ) : (
-            <ExternalLink className="text-red-600" size={24} />
+            <ExternalLink className="text-primary" size={20} />
           )}
         </div>
       </div>
@@ -65,18 +65,18 @@ function TikTokPreview({ blog }: { blog: Blog }) {
 
 function BlogCard({ blog }: { blog: Blog }) {
   return (
-    <article className="flex flex-col sm:flex-row bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300 sm:min-h-[350px]">
+    <article className="flex flex-col sm:flex-row bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden hover:shadow-md transition-shadow duration-300 sm:min-h-[300px]">
       {/* MINIATURA / VIDEO */}
-      <div className="relative w-full sm:w-80 md:w-96 aspect-[9/16] sm:aspect-auto shrink-0 bg-zinc-950">
+      <div className="relative w-full sm:w-72 md:w-80 aspect-[9/16] sm:aspect-auto shrink-0 bg-zinc-950">
         <TikTokPreview blog={blog} />
       </div>
 
       {/* CONTENIDO */}
-      <div className="flex flex-col justify-center p-6 md:p-10">
-        <h2 className="text-xl md:text-3xl font-bold text-zinc-800 mb-3 md:mb-4 leading-tight">
+      <div className="flex flex-col justify-center p-6 md:p-8">
+        <h2 className="text-lg md:text-2xl font-bold text-zinc-800 mb-2 md:mb-3 tracking-tight leading-tight">
           {blog.titulo}
         </h2>
-        <p className="text-zinc-500 text-sm md:text-lg leading-relaxed">{blog.descripcion}</p>
+        <p className="text-zinc-500 text-sm md:text-base leading-relaxed">{blog.descripcion}</p>
       </div>
     </article>
   );
@@ -112,37 +112,37 @@ export default function BlogsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <Loader2 className="animate-spin text-red-600 mb-5" size={54} />
-        <h1 className="text-3xl font-black italic uppercase tracking-tight text-red-600">
+        <Loader2 className="animate-spin text-primary mb-5" size={48} />
+        <h1 className="text-2xl font-bold tracking-tight text-primary">
           Mi Ahorro Pharma
         </h1>
-        <p className="text-zinc-400 mt-2 font-medium">Cargando blogs...</p>
+        <p className="text-zinc-400 mt-2 text-sm">Cargando blogs...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16 font-sans">
+    <div className="min-h-screen bg-gray-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16">
       {/* HERO */}
-      <section className="py-14 md:py-16 px-6 text-center border-b border-zinc-100 bg-white">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 uppercase tracking-tight text-red-600">
+      <section className="py-10 md:py-14 px-6 text-center border-b border-zinc-200 bg-white">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 tracking-tight text-zinc-900">
           Blogs
         </h1>
-        <p className="text-zinc-600 max-w-2xl mx-auto text-base md:text-lg font-medium leading-relaxed">
+        <p className="text-zinc-500 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
           Consejos de salud, novedades y contenido en video directo desde nuestro TikTok.
         </p>
       </section>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 md:py-14">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 md:py-10">
         {blogs.length > 0 ? (
-          <div className="flex flex-col gap-6 md:gap-8">
+          <div className="flex flex-col gap-5 md:gap-6">
             {blogs.map((blog) => (
               <BlogCard key={blog.id} blog={blog} />
             ))}
           </div>
         ) : (
-          <div className="py-20 text-center">
-            <p className="text-zinc-500 text-lg font-medium">Todavía no hay blogs publicados.</p>
+          <div className="py-20 text-center bg-white rounded-2xl border border-zinc-200">
+            <p className="text-zinc-500 text-base font-medium">Todavía no hay blogs publicados.</p>
           </div>
         )}
       </div>

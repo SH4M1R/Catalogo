@@ -72,10 +72,10 @@ function FiltrosPanel({
   const rightPct = ((rangoPrecio[1] - min) / span) * 100;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-7">
       {/* CATEGORÍAS */}
       <div>
-        <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400 mb-4">
+        <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400 mb-3">
           Categorías
         </h3>
         <div className="flex flex-col gap-1">
@@ -83,10 +83,10 @@ function FiltrosPanel({
             <button
               key={cat}
               onClick={() => onCategoria(cat)}
-              className={`text-left px-4 py-3 rounded-xl font-medium text-sm transition-all flex items-center justify-between ${
+              className={`text-left px-3.5 py-2.5 rounded-lg font-semibold text-sm transition-all flex items-center justify-between ${
                 categoriaActiva === cat
-                  ? "bg-red-600 text-white shadow-md shadow-red-200"
-                  : "text-zinc-600 hover:bg-red-50 hover:text-red-600"
+                  ? "bg-primary text-white shadow-md"
+                  : "text-zinc-600 hover:bg-primary/10 hover:text-primary"
               }`}
             >
               {cat}
@@ -100,12 +100,12 @@ function FiltrosPanel({
 
       {/* PRECIO */}
       <div>
-        <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400 mb-4">
+        <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400 mb-3">
           Precio
         </h3>
 
         <div className="flex items-center justify-between mb-4 gap-3">
-          <div className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2">
+          <div className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2">
             <span className="block text-[10px] font-bold text-zinc-400 uppercase">
               Desde
             </span>
@@ -113,7 +113,7 @@ function FiltrosPanel({
               S/ {rangoPrecio[0].toFixed(2)}
             </span>
           </div>
-          <div className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2">
+          <div className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2">
             <span className="block text-[10px] font-bold text-zinc-400 uppercase">
               Hasta
             </span>
@@ -125,7 +125,7 @@ function FiltrosPanel({
 
         <div className="relative h-1.5 rounded-full bg-zinc-200 mt-3 mb-1">
           <div
-            className="absolute h-1.5 rounded-full bg-red-500"
+            className="absolute h-1.5 rounded-full bg-primary"
             style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }}
           />
           <input
@@ -157,7 +157,7 @@ function FiltrosPanel({
 
       <button
         onClick={onReset}
-        className="flex items-center justify-center gap-2 text-sm font-bold text-zinc-500 hover:text-red-600 transition-colors py-2"
+        className="flex items-center justify-center gap-2 text-sm font-semibold text-zinc-500 hover:text-primary transition-colors py-2"
       >
         <RotateCcw size={15} />
         Limpiar filtros
@@ -178,20 +178,20 @@ function FiltrosPanel({
         .rango-slider::-webkit-slider-thumb {
           appearance: none;
           pointer-events: auto;
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           border-radius: 9999px;
-          background: #dc2626;
+          background: var(--color-primary, #dc2626);
           border: 3px solid white;
           box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
           cursor: pointer;
         }
         .rango-slider::-moz-range-thumb {
           pointer-events: auto;
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           border-radius: 9999px;
-          background: #dc2626;
+          background: var(--color-primary, #dc2626);
           border: 3px solid white;
           box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
           cursor: pointer;
@@ -314,66 +314,66 @@ export default function ProductosPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <Loader2 className="animate-spin text-red-600 mb-5" size={54} />
-        <h1 className="text-3xl font-black italic uppercase tracking-tight text-red-600">
+        <Loader2 className="animate-spin text-primary mb-5" size={48} />
+        <h1 className="text-2xl font-bold tracking-tight text-primary">
           Mi Ahorro Pharma
         </h1>
-        <p className="text-zinc-400 mt-2 font-medium">Cargando catálogo...</p>
+        <p className="text-zinc-400 mt-2 text-sm">Cargando catálogo...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 overflow-x-hidden font-sans pb-24 md:pb-0">
-      <section className="relative bg-gradient-to-b from-gray-200 to-gray-100 pb-32 pt-10 px-5 border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden font-sans pb-24 md:pb-0">
+      <section className="bg-white pb-10 pt-8 px-4 md:px-6 border-b border-zinc-200">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center text-center">
-            <h1 className="text-zinc-800 text-3xl md:text-4xl font-black mb-6 tracking-tight uppercase">
+            <h1 className="text-zinc-900 text-2xl md:text-3xl font-bold mb-5 tracking-tight">
               Productos Disponibles
             </h1>
-            <div className="flex w-full max-w-3xl gap-3">
-              <div className="relative flex-1 group">
+            <div className="flex w-full max-w-2xl gap-3">
+              <div className="relative flex-1">
                 <Search
-                  className="absolute left-6 top-1/2 -translate-y-1/2 text-red-500"
-                  size={22}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
+                  size={18}
                 />
                 <input
                   type="text"
                   placeholder="Buscar medicamentos..."
-                  className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white shadow-xl shadow-gray-200/50 outline-none text-zinc-800 text-base md:text-lg border border-transparent focus:border-red-200 transition-all"
+                  className="w-full h-12 pl-11 pr-4 rounded-xl bg-zinc-50 border border-zinc-200 outline-none text-zinc-800 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                   value={busquedaInput}
                   onChange={(e) => setBusquedaInput(e.target.value)}
                 />
               </div>
               <button
                 onClick={() => setShowMobileFilters(true)}
-                className="md:hidden flex items-center justify-center w-16 h-16 bg-red-600 text-white rounded-2xl shadow-xl active:scale-95 transition-transform"
+                className="md:hidden flex items-center justify-center w-12 h-12 bg-primary hover:bg-primary-dark text-white rounded-xl shadow-xs transition-all active:scale-95"
               >
-                <SlidersHorizontal size={24} />
+                <SlidersHorizontal size={20} />
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 -mt-16 relative z-20">
-        <div className="flex gap-8">
+      <div className="max-w-[1600px] mx-auto px-4 md:px-8 mt-6 relative z-20">
+        <div className="flex gap-6">
           {/* SIDEBAR DESKTOP */}
           <aside
             className={`hidden md:block transition-all duration-500 ease-in-out ${
-              showFilters ? "w-72 opacity-100" : "w-0 opacity-0 overflow-hidden"
+              showFilters ? "w-64 opacity-100" : "w-0 opacity-0 overflow-hidden"
             }`}
           >
-            <div className="sticky top-24 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-bold text-sm uppercase tracking-widest text-zinc-400">
+            <div className="sticky top-24 bg-white border border-zinc-200 rounded-2xl p-5 shadow-xs">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="font-bold text-xs uppercase tracking-widest text-zinc-400">
                   Filtros
                 </h2>
                 <button
                   onClick={() => setShowFilters(false)}
-                  className="hover:text-red-600 transition-colors"
+                  className="text-zinc-400 hover:text-primary transition-colors"
                 >
-                  <ChevronLeft size={20} />
+                  <ChevronLeft size={18} />
                 </button>
               </div>
               <FiltrosPanel
@@ -390,18 +390,18 @@ export default function ProductosPage() {
 
           {/* MAIN */}
           <main className="flex-1">
-            <div className="flex items-center justify-between mb-8 px-2">
-              <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between mb-6 px-1">
+              <div className="flex items-center gap-3">
                 {!showFilters && (
                   <button
                     onClick={() => setShowFilters(true)}
-                    className="hidden md:flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 text-zinc-600 hover:border-red-500 hover:text-red-600 transition-all shadow-sm"
+                    className="hidden md:flex items-center gap-2 bg-white px-3.5 py-2 rounded-lg border border-zinc-200 text-zinc-600 hover:border-primary hover:text-primary transition-all shadow-xs"
                   >
-                    <SlidersHorizontal size={18} />
-                    <span className="font-bold text-sm uppercase">Filtros</span>
+                    <SlidersHorizontal size={16} />
+                    <span className="font-semibold text-sm">Filtros</span>
                   </button>
                 )}
-                <h2 className="text-xl md:text-2xl font-bold text-zinc-800">{categoriaActiva}</h2>
+                <h2 className="text-lg md:text-xl font-bold text-zinc-800 tracking-tight">{categoriaActiva}</h2>
               </div>
               <span className="text-zinc-400 text-sm font-medium">
                 {filtrados.length} resultados
@@ -411,7 +411,7 @@ export default function ProductosPage() {
             {filtrados.length > 0 ? (
               <>
                 <div
-                  className={`grid gap-4 md:gap-6 transition-all duration-500 ${
+                  className={`grid gap-4 md:gap-5 transition-all duration-500 ${
                     showFilters
                       ? "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                       : "grid-cols-2 md:grid-cols-4 xl:grid-cols-5"
@@ -431,7 +431,7 @@ export default function ProductosPage() {
                   <div className="flex justify-center mt-10">
                     <button
                       onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
-                      className="px-7 py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full shadow-lg transition-all active:scale-95"
+                      className="px-6 py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl shadow-xs hover:shadow-md transition-all active:scale-95"
                     >
                       Ver más productos
                     </button>
@@ -439,11 +439,11 @@ export default function ProductosPage() {
                 )}
               </>
             ) : (
-              <div className="py-20 text-center">
-                <p className="text-zinc-500 text-lg font-medium mb-4">No hay resultados</p>
+              <div className="py-20 text-center bg-white rounded-2xl border border-zinc-200">
+                <p className="text-zinc-500 text-base font-medium mb-3">No hay resultados</p>
                 <button
                   onClick={resetFiltros}
-                  className="text-red-600 font-bold text-sm hover:underline"
+                  className="text-primary font-semibold text-sm hover:underline"
                 >
                   Limpiar filtros
                 </button>
@@ -462,13 +462,13 @@ export default function ProductosPage() {
           />
           <div className="absolute left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
             <div className="p-6 flex flex-col h-full overflow-hidden">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-black text-zinc-800 uppercase">Filtrar por</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-zinc-800 tracking-tight">Filtrar por</h2>
                 <button
                   onClick={() => setShowMobileFilters(false)}
-                  className="p-2 bg-gray-100 rounded-full"
+                  className="p-2 bg-zinc-100 rounded-full text-zinc-500"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto pr-1">
@@ -484,7 +484,7 @@ export default function ProductosPage() {
               </div>
               <button
                 onClick={() => setShowMobileFilters(false)}
-                className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl shadow-lg transition-all active:scale-95 uppercase tracking-wider"
+                className="mt-4 w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3.5 rounded-xl shadow-xs transition-all active:scale-95"
               >
                 Ver {filtrados.length} resultados
               </button>
@@ -496,9 +496,9 @@ export default function ProductosPage() {
       {/* TOAST */}
       {notificacion && (
         <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[999]">
-          <div className="bg-zinc-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300">
-            <CheckCircle2 className="text-green-400" size={22} />
-            <span className="font-bold text-xs md:text-sm uppercase tracking-wider">
+          <div className="bg-zinc-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300">
+            <CheckCircle2 className="text-green-400" size={20} />
+            <span className="font-semibold text-sm">
               {notificacion}
             </span>
           </div>

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useCarrito } from "@/context/CarritoContext";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 import {
   Banknote,
   LocateFixed,
@@ -9,6 +11,8 @@ import {
   MapPin,
   MessageCircle,
   ShoppingBag,
+  Store,
+  Navigation,
 } from "lucide-react";
 
 const metodosPago = [
@@ -17,6 +21,14 @@ const metodosPago = [
   { nombre: "Visa", src: "/pagos/visa.png", fallback: "VI" },
   { nombre: "Efectivo", src: "/pagos/efectivo.png", fallback: "EF" },
 ];
+
+const BOTICA = {
+  nombre: "Mi Ahorro Pharma",
+  direccionTexto: "Puente Piedra, Lima, Perú",
+  lat: -11.854611196276153,
+  lng: -77.06324886513723,
+  mapsUrl: "https://maps.app.goo.gl/MKjPVv8a3ZBxMHrF7",
+};
 
 // Limpia símbolos de moneda / comas antes de convertir a número.
 function parsePrecio(precio: string | number | undefined): number {
@@ -27,21 +39,36 @@ function parsePrecio(precio: string | number | undefined): number {
   return Number.isFinite(valor) ? valor : 0;
 }
 
+// Arma la URL de Google Maps para ir DESDE el cliente HACIA la botica.
+function construirUrlMapsHaciaBotica(origen: { lat: number; lng: number } | null) {
+  const params = new URLSearchParams({
+    api: "1",
+    destination: `${BOTICA.lat},${BOTICA.lng}`,
+    travelmode: "driving",
+  });
+
+  if (origen) {
+    params.set("origin", `${origen.lat},${origen.lng}`);
+  }
+
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
 function MetodoPagoBadge({ metodo }: { metodo: (typeof metodosPago)[number] }) {
   const [fallo, setFallo] = useState(false);
 
   return (
     <div
       title={metodo.nombre}
-      className="flex h-11 w-11 items-center justify-center rounded-xl border border-red-100 bg-white shadow-sm overflow-hidden shrink-0"
+      className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-200 bg-white shadow-xs overflow-hidden shrink-0"
     >
       {fallo ? (
-        <span className="text-xs font-black text-red-600">{metodo.fallback}</span>
+        <span className="text-xs font-bold text-primary">{metodo.fallback}</span>
       ) : (
         <img
           src={metodo.src}
           alt={metodo.nombre}
-          className="max-h-7 max-w-7 object-contain"
+          className="max-h-6 max-w-6 object-contain"
           onError={() => setFallo(true)}
         />
       )}
@@ -55,6 +82,7 @@ export default function VentaPage() {
   const [nombre, setNombre] = useState("");
   const [dni, setDni] = useState("");
   const [direccion, setDireccion] = useState("");
+  const [coordsUsuario, setCoordsUsuario] = useState<{ lat: number; lng: number } | null>(null);
 
   const [loadingUbicacion, setLoadingUbicacion] = useState(false);
   const [ubicacionError, setUbicacionError] = useState("");
@@ -62,67 +90,83 @@ export default function VentaPage() {
   const [errores, setErrores] = useState({
     nombre: "",
     dni: "",
-    direccion: "",
   });
 
-  const obtenerUbicacion = () => {
+  const obtenerUbicacion = async () => {
     setUbicacionError("");
-
-    if (!navigator.geolocation) {
-      setUbicacionError("Tu navegador no permite obtener la ubicación.");
-      return;
-    }
-
     setLoadingUbicacion(true);
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const coordenadas = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+    try {
+      let latitude: number;
+      let longitude: number;
 
-        try {
-          const respuesta = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
-          );
+      if (Capacitor.isNativePlatform()) {
+        const permisos = await Geolocation.requestPermissions();
 
-          const data = await respuesta.json();
-
-          setDireccion(data.display_name || coordenadas);
-
-          setErrores((prev) => ({
-            ...prev,
-            direccion: "",
-          }));
-        } catch {
-          setDireccion(coordenadas);
-
-          setUbicacionError(
-            "No se pudo convertir la ubicación en dirección, se agregaron las coordenadas."
-          );
-        } finally {
+        if (permisos.location !== "granted" && permisos.coarseLocation !== "granted") {
+          setUbicacionError("Debes conceder el permiso de ubicación en los ajustes de la app.");
           setLoadingUbicacion(false);
+          return;
         }
-      },
-      () => {
-        setLoadingUbicacion(false);
 
-        setUbicacionError("No se pudo obtener la ubicación. Escríbela manualmente.");
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 0,
+        const posicion = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 12000,
+        });
+
+        latitude = posicion.coords.latitude;
+        longitude = posicion.coords.longitude;
+      } else {
+        if (!navigator.geolocation) {
+          setUbicacionError("Tu navegador no permite obtener la ubicación.");
+          setLoadingUbicacion(false);
+          return;
+        }
+
+        const posicion = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 12000,
+            maximumAge: 0,
+          });
+        });
+
+        latitude = posicion.coords.latitude;
+        longitude = posicion.coords.longitude;
       }
-    );
+
+      setCoordsUsuario({ lat: latitude, lng: longitude });
+
+      const coordenadas = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+
+      try {
+        const respuesta = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+        );
+        const data = await respuesta.json();
+        setDireccion(data.display_name || coordenadas);
+      } catch {
+        setDireccion(coordenadas);
+        setUbicacionError(
+          "No se pudo convertir la ubicación en dirección, se agregaron las coordenadas."
+        );
+      }
+    } catch (error) {
+      console.error("Error de geolocalización:", error);
+      setUbicacionError("No se pudo obtener la ubicación. Escríbela manualmente.");
+    } finally {
+      setLoadingUbicacion(false);
+    }
   };
 
   const generarMensaje = () => {
     let mensaje = "";
 
-    mensaje += "*NUEVA CONSULTA DE COMPRA* \n";
+    mensaje += "*NUEVA CONSULTA DE COMPRA — RECOJO EN TIENDA* \n";
     mensaje += `Cliente: ${nombre}\n`;
     mensaje += `DNI: ${dni}\n`;
-    mensaje += `Dirección: ${direccion}\n`;
+    mensaje += `Recojo en: ${BOTICA.nombre} — ${BOTICA.direccionTexto}\n`;
+    mensaje += `Ubicación de la botica: ${BOTICA.mapsUrl}\n`;
     mensaje += "━━━━━━━━━━━━━━\n";
     mensaje += "*PRODUCTOS*\n";
 
@@ -146,7 +190,6 @@ export default function VentaPage() {
     const nuevosErrores = {
       nombre: "",
       dni: "",
-      direccion: "",
     };
 
     let valido = true;
@@ -164,57 +207,74 @@ export default function VentaPage() {
       valido = false;
     }
 
-    if (!direccion.trim()) {
-      nuevosErrores.direccion = "Ingrese su dirección o use la ubicación automática";
-      valido = false;
-    }
-
     setErrores(nuevosErrores);
 
     if (!valido) return;
 
     const mensaje = generarMensaje();
     const telefono = "51964328743";
-    const url = `https://wa.me/${telefono}?text=${mensaje}`;
+    const urlWhatsapp = `https://wa.me/${telefono}?text=${mensaje}`;
+    const urlMaps = construirUrlMapsHaciaBotica(coordsUsuario);
 
-    window.open(url, "_blank");
     vaciarCarrito();
+
+    window.open(urlWhatsapp, "_blank");
+    window.open(urlMaps, "_blank");
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f6f6f6] pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-16 text-zinc-900">
-      <section className="relative overflow-hidden bg-red-600 px-4 pb-20 pt-4 md:px-6">
-        <div className="relative mx-auto max-w-6xl">
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
-            <div>
-              <h1 className="max-w-3xl text-3xl font-black text-white sm:text-4xl md:text-6xl">
-                Finaliza tu consulta de compra
-              </h1>
-
-              <p className="mt-4 max-w-2xl text-sm font-medium text-red-100 sm:text-base">
-                Completa tus datos y envía tu pedido directamente por WhatsApp.
-              </p>
-            </div>
-          </div>
+    <div className="min-h-screen overflow-x-hidden bg-gray-50 pb-16 md:pb-24 text-zinc-900">
+      <section className="bg-white border-b border-zinc-200 px-4 py-8 md:px-6 md:py-10">
+        <div className="mx-auto max-w-6xl">
+          <h1 className="max-w-2xl text-2xl font-bold text-zinc-900 tracking-tight sm:text-3xl">
+            Finaliza tu recojo en tienda
+          </h1>
+          <p className="mt-2 max-w-xl text-sm font-medium text-zinc-500">
+            Por el momento todos los pedidos se recogen directamente en la botica.
+            Completa tus datos y te enviaremos a WhatsApp y a Google Maps con la
+            ruta hacia nuestro local.
+          </p>
         </div>
       </section>
 
-      <main className="relative z-10 mx-auto -mt-10 grid max-w-6xl grid-cols-1 gap-5 px-3 sm:px-4 md:-mt-14 md:px-6 lg:grid-cols-[1fr_410px]">
-        <section className="rounded-[24px] border border-red-100 bg-white p-4 shadow-[0_18px_55px_rgba(31,31,31,0.12)] sm:p-5 md:rounded-[28px] md:p-8">
-          <div className="flex flex-col gap-4 border-b border-dashed border-zinc-200 pb-6 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-2xl font-black md:text-3xl">Datos del cliente</h2>
-
-              <p className="mt-1 text-sm font-medium text-zinc-500">
-                Completa la información para preparar el mensaje.
+      <main className="mx-auto mt-6 mb-12 md:mb-16 grid max-w-6xl grid-cols-1 gap-5 px-4 md:px-6 lg:grid-cols-[1fr_380px]">
+        <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs sm:p-6 md:p-8">
+          {/* AVISO DE RECOJO EN TIENDA */}
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Store size={18} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-zinc-800">
+                Recojo en {BOTICA.nombre}
               </p>
+              <p className="mt-0.5 text-xs font-medium text-zinc-500">
+                {BOTICA.direccionTexto}
+              </p>
+              
+              <a
+                href={BOTICA.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1.5 inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+              >
+                <Navigation size={12} />
+                Ver ubicación de la botica
+              </a>
             </div>
           </div>
 
-          <div className="mt-7 grid gap-5 md:grid-cols-2">
+          <div className="border-b border-zinc-100 pb-5">
+            <h2 className="text-lg font-bold text-zinc-800 tracking-tight md:text-xl">Datos del cliente</h2>
+            <p className="mt-1 text-sm font-medium text-zinc-500">
+              Completa la información para preparar el mensaje.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-5 md:grid-cols-2">
             {/* NOMBRE */}
             <div>
-              <label className="mb-2 block text-sm font-black text-zinc-700">
+              <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
                 Nombre completo
               </label>
 
@@ -229,22 +289,22 @@ export default function VentaPage() {
                   }
                 }}
                 placeholder="Ingrese su nombre completo"
-                className={`h-14 w-full rounded-2xl border bg-zinc-50 px-5 font-semibold outline-none transition focus:bg-white focus:ring-4
+                className={`h-12 w-full rounded-xl border bg-zinc-50 px-4 text-sm font-medium outline-none transition focus:bg-white focus:ring-2
                 ${
                   errores.nombre
-                    ? "border-red-500 focus:ring-red-100"
-                    : "border-zinc-200 focus:border-red-500 focus:ring-red-100"
+                    ? "border-red-400 focus:ring-red-100"
+                    : "border-zinc-200 focus:border-primary focus:ring-primary/20"
                 }`}
               />
 
               {errores.nombre && (
-                <p className="mt-2 text-sm font-semibold text-red-500">{errores.nombre}</p>
+                <p className="mt-1.5 text-xs font-semibold text-red-500">{errores.nombre}</p>
               )}
             </div>
 
             {/* DNI */}
             <div>
-              <label className="mb-2 block text-sm font-black text-zinc-700">DNI</label>
+              <label className="mb-1.5 block text-sm font-semibold text-zinc-700">DNI</label>
 
               <input
                 type="text"
@@ -259,48 +319,40 @@ export default function VentaPage() {
                   }
                 }}
                 placeholder="Ingrese su DNI"
-                className={`h-14 w-full rounded-2xl border bg-zinc-50 px-5 font-semibold outline-none transition focus:bg-white focus:ring-4
+                className={`h-12 w-full rounded-xl border bg-zinc-50 px-4 text-sm font-medium outline-none transition focus:bg-white focus:ring-2
                 ${
                   errores.dni
-                    ? "border-red-500 focus:ring-red-100"
-                    : "border-zinc-200 focus:border-red-500 focus:ring-red-100"
+                    ? "border-red-400 focus:ring-red-100"
+                    : "border-zinc-200 focus:border-primary focus:ring-primary/20"
                 }`}
               />
 
               {errores.dni && (
-                <p className="mt-2 text-sm font-semibold text-red-500">{errores.dni}</p>
+                <p className="mt-1.5 text-xs font-semibold text-red-500">{errores.dni}</p>
               )}
             </div>
 
-            {/* DIRECCIÓN — antes faltaba este campo en el formulario */}
+            {/* UBICACIÓN DEL CLIENTE */}
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-black text-zinc-700">
-                Dirección de entrega
+              <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
+                Tu ubicación{" "}
+                <span className="font-normal text-zinc-400">
+                  (opcional — la usamos para trazarte la ruta hacia la botica)
+                </span>
               </label>
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <MapPin
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                    size={18}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
+                    size={17}
                   />
                   <input
                     type="text"
                     value={direccion}
-                    onChange={(e) => {
-                      setDireccion(e.target.value);
-
-                      if (errores.direccion) {
-                        setErrores((prev) => ({ ...prev, direccion: "" }));
-                      }
-                    }}
+                    onChange={(e) => setDireccion(e.target.value)}
                     placeholder="Escribe tu dirección o usa tu ubicación"
-                    className={`h-14 w-full rounded-2xl border bg-zinc-50 pl-11 pr-5 font-semibold outline-none transition focus:bg-white focus:ring-4
-                    ${
-                      errores.direccion
-                        ? "border-red-500 focus:ring-red-100"
-                        : "border-zinc-200 focus:border-red-500 focus:ring-red-100"
-                    }`}
+                    className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-4 text-sm font-medium outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
 
@@ -308,12 +360,12 @@ export default function VentaPage() {
                   type="button"
                   onClick={obtenerUbicacion}
                   disabled={loadingUbicacion}
-                  className="flex h-14 shrink-0 items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-5 font-black text-white transition hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-60"
+                  className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-60"
                 >
                   {loadingUbicacion ? (
-                    <Loader2 size={20} className="animate-spin" />
+                    <Loader2 size={18} className="animate-spin" />
                   ) : (
-                    <LocateFixed size={20} />
+                    <LocateFixed size={18} />
                   )}
                   <span className="whitespace-nowrap">
                     {loadingUbicacion ? "Ubicando..." : "Usar mi ubicación"}
@@ -321,11 +373,13 @@ export default function VentaPage() {
                 </button>
               </div>
 
-              {errores.direccion && (
-                <p className="mt-2 text-sm font-semibold text-red-500">{errores.direccion}</p>
+              {ubicacionError && (
+                <p className="mt-1.5 text-xs font-semibold text-amber-600">{ubicacionError}</p>
               )}
-              {!errores.direccion && ubicacionError && (
-                <p className="mt-2 text-sm font-semibold text-amber-600">{ubicacionError}</p>
+              {coordsUsuario && !ubicacionError && (
+                <p className="mt-1.5 text-xs font-medium text-emerald-600">
+                  Ubicación detectada. Te mostraremos la ruta exacta hacia la botica.
+                </p>
               )}
             </div>
           </div>
@@ -333,39 +387,38 @@ export default function VentaPage() {
           {/* BOTÓN */}
           <button
             onClick={realizarConsulta}
-            className="mt-7 flex h-16 w-full items-center justify-center gap-3 rounded-2xl bg-green-500 text-base font-black text-white shadow-[0_15px_35px_rgba(37,211,102,0.35)] transition hover:bg-[#1ebe5d] active:scale-[0.98] md:text-lg"
+            className="mt-7 flex h-13 w-full items-center justify-center gap-2.5 rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-white shadow-xs transition hover:bg-emerald-600 hover:shadow-md active:scale-[0.98] md:text-base"
           >
-            <MessageCircle size={26} />
-            Realizar consulta por WhatsApp
+            <MessageCircle size={20} />
+            Enviar por WhatsApp y ver cómo llegar
           </button>
         </section>
 
         {/* RESUMEN */}
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className="overflow-hidden rounded-[24px] bg-white shadow-xl md:rounded-[28px]">
-            <div className="bg-zinc-950 p-5 text-white">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500">
-                  <ShoppingBag size={28} />
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xs">
+            <div className="bg-primary p-5 text-white">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15">
+                  <ShoppingBag size={22} />
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-black">Resumen</h2>
-
-                  <p className="text-sm font-medium text-zinc-300">
+                  <h2 className="text-lg font-bold tracking-tight">Resumen</h2>
+                  <p className="text-xs font-medium text-white/75">
                     {carrito.length} producto(s) seleccionado(s)
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="max-h-[430px] space-y-3 overflow-y-auto p-4">
+            <div className="max-h-[400px] space-y-2.5 overflow-y-auto p-4">
               {carrito.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-[70px_1fr] gap-4 rounded-2xl bg-zinc-50 p-3 sm:grid-cols-[76px_1fr]"
+                  className="grid grid-cols-[64px_1fr] gap-3.5 rounded-xl bg-zinc-50 p-3 border border-zinc-100"
                 >
-                  <div className="flex h-[70px] w-[70px] items-center justify-center rounded-xl bg-white p-2 sm:h-20 sm:w-20">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-white p-2 border border-zinc-100">
                     <img
                       src={item.imagen || "/placeholder-farma.webp"}
                       alt={item.nombre}
@@ -374,15 +427,15 @@ export default function VentaPage() {
                   </div>
 
                   <div className="min-w-0">
-                    <h3 className="line-clamp-2 text-sm font-black leading-tight text-zinc-800 sm:text-base">
+                    <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-zinc-800">
                       {item.nombre}
                     </h3>
 
-                    <p className="mt-2 text-sm font-semibold text-zinc-500">
+                    <p className="mt-1.5 text-xs font-medium text-zinc-500">
                       Cantidad: {item.cantidad}
                     </p>
 
-                    <p className="mt-1 text-lg font-black text-red-600 sm:text-xl">
+                    <p className="mt-1 text-base font-bold text-primary">
                       S/ {(parsePrecio(item.precio) * item.cantidad).toFixed(2)}
                     </p>
                   </div>
@@ -390,19 +443,19 @@ export default function VentaPage() {
               ))}
             </div>
 
-            <div className="border-t border-dashed border-zinc-200 p-5">
+            <div className="border-t border-zinc-100 p-5">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-lg font-black text-zinc-700">Total</span>
+                <span className="text-base font-bold text-zinc-700">Total</span>
 
-                <span className="text-3xl font-black text-red-600 sm:text-4xl">
+                <span className="text-2xl font-bold text-primary sm:text-3xl">
                   S/ {total.toFixed(2)}
                 </span>
               </div>
 
-              <div className="mt-4 rounded-2xl bg-red-50 p-3">
+              <div className="mt-4 rounded-xl bg-primary/10 p-3">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="flex items-center gap-2 text-sm font-bold text-red-700">
-                    <Banknote size={18} />
+                  <p className="flex items-center gap-2 text-xs font-bold text-primary">
+                    <Banknote size={16} />
                     Aceptamos
                   </p>
                   <div className="flex items-center gap-2">

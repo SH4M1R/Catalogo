@@ -19,14 +19,19 @@ export default function Navbar() {
 
   const totalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
 
+  const linkClass = (active: boolean) =>
+    `flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+      active ? "bg-white text-primary shadow-md" : "text-white/75 hover:bg-white/10 hover:text-white"
+    }`;
+
   return (
     <>
       {/* NAVBAR SUPERIOR */}
-      <nav className="sticky top-0 z-50 bg-red-600 border-b border-red-700 shadow-lg backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-primary shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-4">
           {/* LOGO — oculto en móvil, visible desde md */}
-          <Link href="/" className="hidden md:flex items-center gap-3 group">
-            <div className="group-hover:scale-105 transition-all">
+          <Link href="/" className="hidden md:flex items-center gap-3 group shrink-0">
+            <div className="group-hover:scale-105 transition-transform">
               <Image
                 src="/logo.webp"
                 alt="Logo Mi Ahorro Pharma"
@@ -40,34 +45,35 @@ export default function Navbar() {
               <h1 className="text-white text-lg md:text-xl font-black tracking-tight">
                 MI AHORRO
               </h1>
-              <span className="text-red-100 text-xs md:text-sm font-bold tracking-wide">
+              <span className="text-white/70 text-xs md:text-sm font-bold tracking-wide">
                 PHARMA
               </span>
             </div>
           </Link>
 
           {/* LINKS DESKTOP */}
-          <div className="hidden md:flex items-center gap-2">
-            {tabs.map((tab) => (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className="text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-red-700 transition-all"
-              >
-                {tab.label.toUpperCase()}
-              </Link>
-            ))}
+          <div className="hidden md:flex items-center gap-1">
+            {tabs.map((tab) => {
+              const active = tab.href === "/" ? pathname === "/" : pathname?.startsWith(tab.href);
+              const Icon = tab.icon;
+              return (
+                <Link key={tab.href} href={tab.href} className={linkClass(!!active)}>
+                  <Icon size={16} />
+                  {tab.label}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* CARRITO — único elemento visible en móvil */}
+          {/* CARRITO */}
           <Link
             href="/carrito"
-            className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-red-700 hover:bg-red-800 border border-red-500/30 shadow-inner transition-all active:scale-90 ml-auto md:ml-0"
+            className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition-all active:scale-95 ml-auto md:ml-0 shrink-0"
           >
-            <ShoppingCart size={21} strokeWidth={2.5} className="text-white" />
+            <ShoppingCart size={20} strokeWidth={2.3} className="text-white" />
 
             {totalItems > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-white text-red-600 text-[10px] font-black min-w-5 h-5 px-1 flex items-center justify-center rounded-full shadow-md border border-red-100 animate-in zoom-in duration-200">
+              <span className="absolute -top-1.5 -right-1.5 bg-white text-primary text-[10px] font-black min-w-5 h-5 px-1 flex items-center justify-center rounded-full shadow-md border border-zinc-100 animate-in zoom-in duration-200">
                 {totalItems}
               </span>
             )}
@@ -94,17 +100,17 @@ export default function Navbar() {
               >
                 <span
                   className={`absolute top-0 h-0.5 w-8 rounded-full transition-all ${
-                    active ? "bg-red-600" : "bg-transparent"
+                    active ? "bg-primary" : "bg-transparent"
                   }`}
                 />
                 <Icon
-                  size={22}
-                  strokeWidth={active ? 2.6 : 2}
-                  className={active ? "text-red-600" : "text-zinc-400"}
+                  size={21}
+                  strokeWidth={active ? 2.5 : 2}
+                  className={active ? "text-primary" : "text-zinc-400"}
                 />
                 <span
-                  className={`text-[11px] font-bold ${
-                    active ? "text-red-600" : "text-zinc-400"
+                  className={`text-[11px] font-semibold ${
+                    active ? "text-primary" : "text-zinc-400"
                   }`}
                 >
                   {tab.label}
