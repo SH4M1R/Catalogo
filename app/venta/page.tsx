@@ -6,9 +6,6 @@ import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
 import {
   Banknote,
-  LocateFixed,
-  Loader2,
-  MapPin,
   MessageCircle,
   ShoppingBag,
   Store,
@@ -329,57 +326,6 @@ export default function VentaPage() {
 
               {errores.dni && (
                 <p className="mt-1.5 text-xs font-semibold text-red-500">{errores.dni}</p>
-              )}
-            </div>
-
-            {/* UBICACIÓN DEL CLIENTE */}
-            <div className="md:col-span-2">
-              <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
-                Tu ubicación{" "}
-                <span className="font-normal text-zinc-400">
-                  (opcional — la usamos para trazarte la ruta hacia la botica)
-                </span>
-              </label>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <MapPin
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
-                    size={17}
-                  />
-                  <input
-                    type="text"
-                    value={direccion}
-                    onChange={(e) => setDireccion(e.target.value)}
-                    placeholder="Escribe tu dirección o usa tu ubicación"
-                    className="h-12 w-full rounded-xl border border-zinc-200 bg-zinc-50 pl-10 pr-4 text-sm font-medium outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={obtenerUbicacion}
-                  disabled={loadingUbicacion}
-                  className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-60"
-                >
-                  {loadingUbicacion ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : (
-                    <LocateFixed size={18} />
-                  )}
-                  <span className="whitespace-nowrap">
-                    {loadingUbicacion ? "Ubicando..." : "Usar mi ubicación"}
-                  </span>
-                </button>
-              </div>
-
-              {ubicacionError && (
-                <p className="mt-1.5 text-xs font-semibold text-amber-600">{ubicacionError}</p>
-              )}
-              {coordsUsuario && !ubicacionError && (
-                <p className="mt-1.5 text-xs font-medium text-emerald-600">
-                  Ubicación detectada. Te mostraremos la ruta exacta hacia la botica.
-                </p>
               )}
             </div>
           </div>

@@ -33,12 +33,12 @@ const slides = [
 
 const team = [
   {
-    name: "Dominga Zegarra",
+    name: "Dra. Domi",
     desc: "Enfermera y Técnica en Farmacia con más de 18 años de trayectoria en el sector salud. Especialista en atención al paciente, gestión farmacéutica y asistencia, comprometida en brindar un servicio humano, seguro y de alta calidad para el bienestar de la comunidad.",
     img: "/persona1.webp",
   },
   {
-    name: "Juan Pablo Inoñan",
+    name: "Dr. Juan",
     desc: "Químico Farmacéutico con más de 20 años de experiencia, actualmente liderando la gestión integral de la botica. Experto en aseguramiento de la calidad y regulación sanitaria, enfocado en garantizar el acceso seguro, ético y confiable a medicamentos.",
     img: "/persona2.webp",
   },

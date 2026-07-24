@@ -72,12 +72,12 @@ export default function Contacto() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Mensaje</label>
+                <label className="block text-sm font-semibold text-zinc-700 mb-1.5">Contacto y Sugerencias</label>
                 <textarea
                   name="message"
                   rows={4}
                   required
-                  placeholder="¿Qué medicamento o producto buscas?"
+                  placeholder="Propuestas de suministros, alianzas comerciales o comentarios sobre la página... "
                   className="w-full p-3 sm:p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
                 ></textarea>
               </div>
