@@ -12,7 +12,7 @@ const enlaces = [
 const redes = [
   {
     nombre: "Facebook",
-    href: "https://www.facebook.com/miahorropharma2020",
+    href: "https://www.facebook.com/profile.php?id=61592013047482",
     icon: "https://cdn.simpleicons.org/facebook/white",
   },
   {
@@ -131,10 +131,10 @@ export default function Footer() {
         {/* LÍNEA DE CRÉDITOS */}
         <div className="mt-14 md:mt-16 pt-8 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 text-center sm:text-left">
           <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-            © {currentYear} Mi Ahorro Pharma
+            © {currentYear} Mi Ahorro Pharma - 2026
           </p>
           <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">
-            Diseñado por Lic. Ingeniería de Software · Juan Pablo Inoñan
+            Diseñado por Ingeniería de Software · Juan Pablo Inoñan
           </p>
         </div>
       </div>

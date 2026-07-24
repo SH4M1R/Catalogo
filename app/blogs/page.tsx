@@ -13,8 +13,7 @@ interface Blog {
 }
 
 const SHEET_URL_BLOGS =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxu2PFEjWEu28sy32MYlzQMu7nyyB_x2dVBmgv5mLy5A7cdAq2hqPkxYDyMsu5r5-GVAhZNtB5GtrU/pub?gid=1105937198&single=true&output=csv";
-
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2tSaGATHDMJrUsCpLaYJzEXU8rII_0OAGRqpikW1FewAhaj85OW93QJMxCDQ_UQ/pub?gid=2016887320&single=true&output=csv"
 function extraerTikTokId(url: string | undefined): string | null {
   if (!url) return null;
   const match = url.match(/\/video\/(\d+)/);

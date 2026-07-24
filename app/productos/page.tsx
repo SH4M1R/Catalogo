@@ -26,7 +26,7 @@ interface Producto {
 }
 
 const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxu2PFEjWEu28sy32MYlzQMu7nyyB_x2dVBmgv5mLy5A7cdAq2hqPkxYDyMsu5r5-GVAhZNtB5GtrU/pub?gid=0&single=true&output=csv";
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vS2tSaGATHDMJrUsCpLaYJzEXU8rII_0OAGRqpikW1FewAhaj85OW93QJMxCDQ_UQ/pub?gid=2029790566&single=true&output=csv";
 
 const PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 250;
